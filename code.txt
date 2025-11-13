@@ -1,0 +1,220 @@
+// Code.gs - Henry's Kitchen Pasta & Grill Management System
+// This script is designed to be deployed as a Web App to handle pre-orders from the restaurant website.
+// Sheet ID: 1Ml9basoN1YXHgrtu8FvfXBNvy_-Harklyvo_De9XHL0
+
+// Global constants
+const SHEET_NAMES = {
+  ORDERS: 'Orders',
+  BOOKINGS: 'Bookings',
+  MENU: 'Menu',
+  CUSTOMERS: 'Customers',
+  SETTINGS: 'Settings'
+};
+const SPREADSHEET_ID = '1Ml9basoN1YXHgrtu8FvfXBNvy_-Harklyvo_De9XHL0';
+const ORDERS_HEADERS = [
+  'Order ID', 'Customer Name', 'Phone', 'Email', 'Order Date', 
+  'Pickup Time', 'Order Items', 'Total Amount', 'Status'
+];
+
+
+// Get the specific spreadsheet by ID
+function getHenryKitchenSpreadsheet() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
+// A robust function to check and fix headers if they don't match the expected format.
+function verifySheetHeaders(sheet, expectedHeaders) {
+  try {
+    const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    let headersMatch = currentHeaders.length >= expectedHeaders.length;
+    if (headersMatch) {
+      for (let i = 0; i < expectedHeaders.length; i++) {
+        if (currentHeaders[i] !== expectedHeaders[i]) {
+          headersMatch = false;
+          break;
+        }
+      }
+    }
+
+    if (!headersMatch) {
+      sheet.getRange('1:1').clear(); // Clear existing headers
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders])
+        .setFontWeight('bold').setBackground('#4A2C2A').setFontColor('white');
+      Logger.log('Sheet headers for ' + sheet.getName() + ' were corrected.');
+    }
+  } catch (e) {
+    // This can happen if the sheet is completely empty.
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders])
+      .setFontWeight('bold').setBackground('#4A2C2A').setFontColor('white');
+    Logger.log('Sheet headers for ' + sheet.getName() + ' were initialized.');
+  }
+}
+
+// Handle POST requests from the website pre-order form
+function doPost(e) {
+  try {
+    const { customerName, customerEmail, customerPhone, pickupTime, orderDetails, subtotal, serviceFee, total } = e.parameter;
+
+    if (!customerName || !customerEmail || !customerPhone || !pickupTime || !orderDetails || !total || !subtotal || !serviceFee) {
+      throw new Error("Missing required form data.");
+    }
+    
+    const orderData = {
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
+      pickupTime: pickupTime,
+      items: JSON.parse(orderDetails),
+      subtotal: parseFloat(subtotal),
+      serviceFee: parseFloat(serviceFee),
+      total: parseFloat(total)
+    };
+
+    const result = createOrder(orderData);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    Logger.log('doPost Error: ' + error.message + ' Stack: ' + error.stack);
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Create a new order entry in the spreadsheet
+function createOrder(orderData) {
+  try {
+    const ss = getHenryKitchenSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.ORDERS);
+    
+    // ** SELF-HEALING STEP **: Verify headers before writing data
+    verifySheetHeaders(sheet, ORDERS_HEADERS);
+
+    const orderId = 'ORD-' + Utilities.getUuid().substring(0, 8).toUpperCase();
+    
+    // Format the order items into a human-readable string with prices
+    const itemsReadableString = orderData.items.map(item => 
+      `${item.quantity} x ${item.name} - $${(item.priceValue * item.quantity).toFixed(2)}`
+    ).join('; ');
+
+    const newRow = [
+      orderId,
+      orderData.name,
+      orderData.phone,
+      orderData.email,
+      new Date(),
+      orderData.pickupTime,
+      itemsReadableString, // Use the new readable string
+      orderData.total,
+      'Pending'
+    ];
+    
+    sheet.appendRow(newRow);
+    
+    sendOrderConfirmation(orderData, orderId);
+    
+    return {
+      status: 'success',
+      message: 'Order created successfully',
+      orderId: orderId
+    };
+  } catch (error) {
+    Logger.log('Error creating order: ' + error.toString());
+    return { status: 'error', message: 'Failed to create order: ' + error.toString() };
+  }
+}
+
+// Send order confirmation email to the customer
+function sendOrderConfirmation(orderData, orderId) {
+  try {
+    const subject = `Henry's Kitchen - Pre-order Confirmation #${orderId}`;
+    const { total, subtotal, serviceFee } = orderData;
+
+    let itemsHtml = orderData.items.map(item => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${item.priceValue.toFixed(2)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.priceValue * item.quantity).toFixed(2)}</td>
+      </tr>
+    `).join('');
+    
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #8B4513;">Henry's Kitchen Pasta & Grill</h2>
+        <h3>Pre-order Confirmation</h3>
+        <p>Dear ${orderData.name},</p>
+        <p>Thank you for your pre-order. We will contact you shortly to confirm all details. Here is a summary of your request:</p>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+          <p><strong>Order ID:</strong> ${orderId}</p>
+          <p><strong>Order Placed:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Requested Pickup Time:</strong> ${new Date(orderData.pickupTime).toLocaleString()}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+          <thead>
+            <tr style="background: #4A2C2A; color: white;">
+              <th style="padding: 10px; text-align: left;">Item</th>
+              <th style="padding: 10px; text-align: center;">Qty</th>
+              <th style="padding: 10px; text-align: right;">Price</th>
+              <th style="padding: 10px; text-align: right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            <tr><td colspan="4" style="padding-top: 10px;"></td></tr>
+            <tr>
+              <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Subtotal:</td>
+              <td style="padding: 8px; text-align: right; font-weight: bold;">$${subtotal.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Service Fee (20%):</td>
+              <td style="padding: 8px; text-align: right; font-weight: bold;">$${serviceFee.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold; font-size: 1.1em; border-top: 2px solid #333;">Total:</td>
+              <td style="padding: 8px; text-align: right; font-weight: bold; font-size: 1.1em; border-top: 2px solid #333;">$${total.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p><strong>Please Note:</strong> This is a pre-order request, not a final confirmation. We will be in touch to confirm your pickup time and payment.</p>
+        <p>Best regards,<br>Henry's Kitchen Team</p>
+      </div>
+    `;
+    
+    MailApp.sendEmail({ to: orderData.email, subject: subject, htmlBody: htmlBody });
+    Logger.log(`Order confirmation sent to ${orderData.email}`);
+  } catch (error) {
+    Logger.log('Error sending order confirmation: ' + error.toString());
+  }
+}
+
+// Handle GET requests (for testing the endpoint)
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'success', message: 'Henry\'s Kitchen API is running.' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// You can run this function manually from the Apps Script editor to set up your spreadsheet for the first time.
+function initializeApp() {
+  const ss = getHenryKitchenSpreadsheet();
+  
+  Object.values(SHEET_NAMES).forEach(sheetName => {
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+    }
+    
+    switch(sheetName) {
+      case SHEET_NAMES.ORDERS:
+        verifySheetHeaders(sheet, ORDERS_HEADERS);
+        break;
+      // You can add header verification for other sheets here if needed.
+    }
+  });
+  
+  Logger.log('Henry\'s Kitchen app initialized/verified successfully');
+}
