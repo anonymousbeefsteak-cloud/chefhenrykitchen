@@ -412,7 +412,7 @@
 
           const nextSlide = useCallback(() => {
               setCurrentSlide(prev => (prev + 1) % slides.length);
-          }, []);
+          }, [slides.length]);
 
           useEffect(() => {
               const interval = setInterval(nextSlide, 5000);
@@ -449,26 +449,27 @@
       };
 
       const ImageModal = ({ src, onClose }) => {
-          return (
-              <div 
-                  className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999]"
-                  onClick={onClose}
-              >
-                  <img 
-                      src={src} 
-                      alt="Enlarged view" 
-                      className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl"
-                      onClick={(e) => e.stopPropagation()}
-                  />
-                  <button 
-                      className="absolute top-5 right-5 text-white text-4xl"
-                      onClick={onClose}
-                  >
-                      &times;
-                  </button>
-                  <p className="absolute bottom-5 text-gray-300 text-sm tracking-wider">Click anywhere to close</p>
-              </div>
-          );
+        if (!src) return null;
+        return (
+            <div 
+                className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999]"
+                onClick={onClose}
+            >
+                <img 
+                    src={src} 
+                    alt="Enlarged view" 
+                    className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                />
+                <button 
+                    className="absolute top-5 right-5 text-white text-4xl"
+                    onClick={onClose}
+                >
+                    &times;
+                </button>
+                <p className="absolute bottom-5 text-gray-300 text-sm tracking-wider">Click anywhere to close</p>
+            </div>
+        );
       };
 
       const MenuItem = ({ item, onAddToCart, onImageClick }) => {
@@ -561,8 +562,90 @@
           );
       };
 
-      const ShoppingCart = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity }) => {
+      const ShoppingCart = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity, onClearCart }) => {
+          const [isCheckingOut, setIsCheckingOut] = useState(false);
+          const [customerName, setCustomerName] = useState('');
+          const [customerEmail, setCustomerEmail] = useState('');
+          const [pickupTime, setPickupTime] = useState('');
+          const [isSubmitting, setIsSubmitting] = useState(false);
+          const [submitStatus, setSubmitStatus] = useState(null); // null, 'success', 'error'
+
           const totalPrice = cartItems.reduce((acc, item) => acc + item.priceValue * item.quantity, 0);
+
+          useEffect(() => {
+              if (isOpen) {
+                  // Reset state when cart opens
+                  setIsCheckingOut(false);
+                  setSubmitStatus(null);
+                  setIsSubmitting(false);
+              }
+          }, [isOpen]);
+          
+          const handleOrderSubmit = () => {
+              if (!customerName || !customerEmail || !pickupTime) {
+                  alert('Please fill in all your details.');
+                  return;
+              }
+              setIsSubmitting(true);
+              setSubmitStatus(null);
+
+              const orderDetails = {
+                  customerName,
+                  customerEmail,
+                  pickupTime,
+                  items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.priceValue })),
+                  total: totalPrice.toFixed(2)
+              };
+
+              if (window.google && window.google.script && window.google.script.run) {
+                  google.script.run
+                      .withSuccessHandler(response => {
+                          if(response.status === 'success') {
+                              setSubmitStatus('success');
+                              onClearCart();
+                          } else {
+                              setSubmitStatus('error');
+                              console.error('Order submission failed:', response.message);
+                          }
+                          setIsSubmitting(false);
+                      })
+                      .withFailureHandler(error => {
+                          setSubmitStatus('error');
+                          setIsSubmitting(false);
+                          console.error('Order submission failed:', error);
+                      })
+                      .processOrder(orderDetails);
+              } else {
+                  console.log("Dev mode: Order details:", orderDetails);
+                  setTimeout(() => {
+                      setIsSubmitting(false);
+                      setSubmitStatus('success');
+                      onClearCart();
+                  }, 1500);
+              }
+          };
+
+          const SuccessView = () => (
+              <div className="flex-grow flex flex-col items-center justify-center text-center p-6">
+                <div className="text-5xl text-green-500 mb-4"><i className="fas fa-check-circle"></i></div>
+                <h3 className="text-2xl font-bold mb-2">Pre-order Submitted!</h3>
+                <p className="text-gray-600 mb-6">Thank you! We have received your pre-order and will contact you shortly to confirm.</p>
+                <button onClick={onClose} className="bg-colore-cinque text-white py-2 px-6 rounded-lg text-lg font-semibold hover:bg-colore-nove transition-colors">
+                    Close
+                </button>
+              </div>
+          );
+
+          const ErrorView = () => (
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-6">
+              <div className="text-5xl text-red-500 mb-4"><i className="fas fa-times-circle"></i></div>
+              <h3 className="text-2xl font-bold mb-2">Something Went Wrong</h3>
+              <p className="text-gray-600 mb-6">We couldn't submit your pre-order. Please try again or call us directly.</p>
+              <button onClick={() => setSubmitStatus(null)} className="bg-colore-cinque text-white py-2 px-6 rounded-lg text-lg font-semibold hover:bg-colore-nove transition-colors">
+                  Try Again
+              </button>
+            </div>
+          );
 
           return (
               <>
@@ -573,45 +656,78 @@
                   <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[1002] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                       <div className="flex flex-col h-full">
                           <div className="flex justify-between items-center p-6 border-b">
-                              <h3 className="text-2xl font-bold">Your Order</h3>
+                              <h3 className="text-2xl font-bold">Your Pre-order</h3>
                               <button onClick={onClose} className="text-2xl hover:text-red-500 transition-colors">&times;</button>
                           </div>
                           
-                          {cartItems.length === 0 ? (
-                              <div className="flex-grow flex items-center justify-center text-center text-gray-500">
-                                  <p>Your cart is empty.</p>
-                              </div>
-                          ) : (
-                              <div className="flex-grow overflow-y-auto p-6 space-y-4">
-                                  {cartItems.map(item => (
-                                      <div key={item.id} className="flex items-center gap-4">
-                                          <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-md" />
-                                          <div className="flex-grow">
-                                              <h4 className="font-semibold">{item.name}</h4>
-                                              <p className="text-gray-600">${item.priceValue.toFixed(2)}</p>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                              <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 border rounded">-</button>
-                                              <span>{item.quantity}</span>
-                                              <button onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 border rounded">+</button>
-                                          </div>
-                                          <button onClick={() => onRemove(item.id)} className="text-gray-400 hover:text-red-500 text-lg">
-                                              <i className="fas fa-trash-alt"></i>
-                                          </button>
+                          {submitStatus === 'success' ? <SuccessView /> : submitStatus === 'error' ? <ErrorView /> : (
+                              <>
+                                  {cartItems.length === 0 ? (
+                                      <div className="flex-grow flex items-center justify-center text-center text-gray-500 p-6">
+                                          <p>Your cart is empty. Add some items from the menu to get started.</p>
                                       </div>
-                                  ))}
-                              </div>
+                                  ) : (
+                                    <>
+                                      <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                                          {cartItems.map(item => (
+                                              <div key={item.id} className="flex items-center gap-4">
+                                                  <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-md flex-shrink-0" />
+                                                  <div className="flex-grow">
+                                                      <h4 className="font-semibold leading-tight">{item.name}</h4>
+                                                      <p className="text-gray-600">${item.priceValue.toFixed(2)}</p>
+                                                  </div>
+                                                  <div className="flex items-center gap-2">
+                                                      <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} className="w-7 h-7 border rounded text-lg">-</button>
+                                                      <span>{item.quantity}</span>
+                                                      <button onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} className="w-7 h-7 border rounded text-lg">+</button>
+                                                  </div>
+                                                  <button onClick={() => onRemove(item.id)} className="text-gray-400 hover:text-red-500 text-lg">
+                                                      <i className="fas fa-trash-alt"></i>
+                                                  </button>
+                                              </div>
+                                          ))}
+                                      </div>
+                                      <div className="p-6 border-t">
+                                        {isCheckingOut ? (
+                                          <div className="space-y-4">
+                                            <h4 className="text-lg font-semibold">Your Details</h4>
+                                            <div>
+                                                <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Full Name</label>
+                                                <input type="text" id="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-colore-cinque focus:border-colore-cinque" required />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700">Email Address</label>
+                                                <input type="email" id="customerEmail" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-colore-cinque focus:border-colore-cinque" required />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="pickupTime" className="block text-sm font-medium text-gray-700">Requested Pickup Time</label>
+                                                <input type="datetime-local" id="pickupTime" value={pickupTime} onChange={e => setPickupTime(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-colore-cinque focus:border-colore-cinque" required />
+                                            </div>
+                                            <div className="flex justify-between items-center text-xl font-bold pt-4">
+                                                <span>Total:</span>
+                                                <span>${totalPrice.toFixed(2)}</span>
+                                            </div>
+                                            <button onClick={handleOrderSubmit} className="w-full bg-green-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2" disabled={isSubmitting}>
+                                                {isSubmitting ? <><i className="fas fa-spinner fa-spin"></i> Submitting...</> : "Submit Pre-order"}
+                                            </button>
+                                            <button onClick={() => setIsCheckingOut(false)} className="w-full text-center text-gray-600 p-2">Cancel</button>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className="flex justify-between items-center text-xl font-bold mb-4">
+                                                <span>Total</span>
+                                                <span>${totalPrice.toFixed(2)}</span>
+                                            </div>
+                                            <button onClick={() => setIsCheckingOut(true)} className="w-full bg-colore-cinque text-white py-3 rounded-lg text-lg font-semibold hover:bg-colore-nove transition-colors">
+                                                Proceed to Checkout
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </>
+                                  )}
+                              </>
                           )}
-
-                          <div className="p-6 border-t">
-                              <div className="flex justify-between items-center text-xl font-bold mb-4">
-                                  <span>Total</span>
-                                  <span>${totalPrice.toFixed(2)}</span>
-                              </div>
-                              <button className="w-full bg-colore-cinque text-white py-3 rounded-lg text-lg font-semibold hover:bg-colore-nove transition-colors disabled:bg-gray-400" disabled={cartItems.length === 0}>
-                                  Proceed to Checkout
-                              </button>
-                          </div>
                       </div>
                   </div>
               </>
@@ -818,6 +934,10 @@
               }
           };
 
+          const handleClearCart = () => {
+            setCartItems([]);
+          };
+
           const handleOpenImage = (src) => {
               setSelectedImage(src);
           };
@@ -842,6 +962,7 @@
                       cartItems={cartItems}
                       onRemove={handleRemoveFromCart}
                       onUpdateQuantity={handleUpdateQuantity}
+                      onClearCart={handleClearCart}
                   />
 
                   {selectedImage && <ImageModal src={selectedImage} onClose={() => setSelectedImage(null)} />}
