@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Henry's Kitchen Pasta & Grill</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700;6..96,900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              'bodoni': ['"Bodoni Moda"', 'serif'],
+              'roboto': ['"Roboto"', 'sans-serif'],
+            },
+            colors: {
+              primary: '#8B4513',
+              secondary: '#D2691E',
+              accent: '#FF6B6B',
+              light: '#FFF8DC',
+              dark: '#4A2C2A',
+              'colore-uno': '#f7f6f5',
+              'colore-due': '#bcb5b1',
+              'colore-tre': '#77726c',
+              'colore-quattro': '#202123',
+              'colore-cinque': '#cb334f',
+              'colore-sei': '#9CA998',
+              'colore-sette': '#67876a',
+              'colore-otto': '#fdc334',
+              'colore-nove': '#821427',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: 'Roboto', sans-serif;
+        color: #202123;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+      h1, h2, h3, h4, h5 { font-family: 'Bodoni Moda', serif; font-weight: 600; }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect, useCallback, useRef } = React;
+
+      // START OF DATA AND COMPONENTS
+
+      const menuData = [
+          {
+              title: "Breads & Soups",
+              items: [
+                  { id: "b1", name: "HOME MADE BREAD", description: "focaccia with balsamic reduction & extra virgin olive oil, whipped butter", price: "$4.95", priceValue: 4.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bread-1920w.jpg" },
+                  { id: "b2", name: "GARLIC BREAD", description: "sliced home made crusty french bread toasted with garlic butter", price: "$4.95", priceValue: 4.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/garlic-1920w.jpg" },
+                  { id: "b3", name: "PORK RILLETTES AND BREAD", description: "a rustic French pork pâté spread (brown pork jam) with homemade bread", price: "$6.95", priceValue: 6.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork+pate+bread-1920w.jpg" },
+                  { id: "b4", name: "TOMATO CHEESE BREAD", description: "tomato marinaram sauce, mazzarella & parmesan cheese melted on focaccia bread", price: "$8.95", priceValue: 8.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tomato+bread-1920w.jpg" },
+                  { id: "s1", name: "FRENCH ONION SOUP", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/onion-soup-ff70c88d-1920w.jpg" },
+                  { id: "s2", name: "SEAFOOD CHOWDER", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chowder-a2521c66-1920w.jpg" },
+                  { id: "s3", name: "LOBSTER BISQUE", description: "with lobster arancini", price: "$24.00", priceValue: 24.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lobster-bisq-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Appetizers & Salads",
+              items: [
+                  { id: "sa1", name: "HOUSE SALAD", description: "spring mix and crisp romaine lettuce tossed with our house dressing and balsamic reduction", price: "(S) $14.95 (L)$16.95", priceValue: 14.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/hou.salad-1920w.jpg" },
+                  { id: "sa2", name: "CAESAR SALAD", description: "crisp romaine lettuce with homemade Caesar dressing, parmesan cheese and homemade garlic crouton", price: "(S) $14.95 (L)$16.95", priceValue: 14.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ceaser-1920w.jpg" },
+                  { id: "sa3", name: "SALMON GRAVLAX", description: "with orange fennel salad", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/samoln+G-1920w.jpg" },
+                  { id: "sa4", name: "MUSHROOM FRICASSEE", description: "sautéed assorted mushrooms on baby spinach salad with balsamic reduction & walnuts", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/mushroom-Fri-1920w.jpg" },
+                  { id: "sa5", name: "BAKED GOAT CHEESE SALAD", description: "with pistachio crust on spinach, pear & mixed berry salad", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/GOAT-CHEESE-d558f8b1-afba1750-1920w.jpg" },
+                  { id: "sa6", name: "BEEF CARPACCIO", description: "Dressed with Dijon mustard, lemon, capers, parmigigiano, truffle oil", price: "$28.00", priceValue: 28.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/beef-carpio-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Hot Appetizers",
+              items: [
+                  { id: "ha1", name: "ESCARGOTS A LAD PARISIENNE", description: "baked snails in a cognac, garlic, & herb butter", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ecsago-a9f326c4-1920w.jpg" },
+                  { id: "ha2", name: "SIGNATURE CRAB CAKE", description: "served on avocado, tomato salsa, mango couils & wasabi aioli", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/carb+cake-1920w.jpg" },
+                  { id: "ha3", name: "FROG LEGS FEUILLETTES", description: "sautéed with mushroom & Riesling cream sauce served in a flaky puff pastry", price: "$28.00", priceValue: 28.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/frog+legs-1920w.jpg" },
+                  { id: "ha4", name: "ROASTED QUAIL & FOIE GRAS", description: "Roasted quail stuffed with wild rice, mushroom & foie gras, wrapped in prosciutto, served with grapes & walnuts", price: "$28.00", priceValue: 28.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/quail+app-1920w.jpg" },
+                  { id: "ha5", name: "CRISP PRAWNS WRAPPED IN ANGEL HAIR", description: "served on carrot raisin salad with mango salsa", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/crisp-prawns-c7f0c313-1920w.jpg" },
+              ]
+          },
+          {
+              title: "The Classic Art of Pasta",
+              items: [
+                  { id: "p1", name: "PENNE POMODORO", description: "with Italian plum tomatoes and fresh basil", price: "$30.00", priceValue: 30.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tom-1920w.jpg" },
+                  { id: "p2", name: "PENNE ALFREDO", description: "tossed in a rich parmigiano cheese cream sauce", price: "$30.00", priceValue: 30.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cream-1920w.jpg" },
+                  { id: "p3", name: "LINGUINE CARBONARA", description: "with pancetta, parmesan cheese, and custard cream sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/caro-pasta-1920w.jpg" },
+                  { id: "p4", name: "LINGUINE POLLO PESTO", description: "with chicken tossed in fresh basil pesto cream sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pesto-1920w.jpg" },
+                  { id: "p5", name: "LINGUINE SALMON AFFUMICATO", description: "with smoked salmon and sun-dried tomatoes in a light cream sauce", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/salmon-pasta-1920w.jpg" },
+                  { id: "p6", name: "LINGUINE AGLIO OLIO", description: "with garlic, chili, white wine, butter, basil, parsley, and extra virgin olive oil", price: "$30.00", priceValue: 30.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/aliolo-6d7b7ab1-1920w.jpg" },
+                  { id: "p7", name: "LINGUINE AMATRICIANA", description: "with pancetta, garlic, shallot, chili, spicy tomatoes sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/AM-8032bb9b-1920w.jpg" },
+                  { id: "p8", name: "LINGUINE SALSICCIA", description: "with sautéed Italian sausage in spicy tomato sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sausage-1920w.jpg" },
+                  { id: "p9", name: "LINGUINE PESCATORA", description: "with mussels, prawns, scallops, clams, and calamari in spicy tomato sauce", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/seafood+pasta-1920w.jpg" },
+                  { id: "p10", name: "LINGUINE VONGOLE", description: "with clam in garlic, chili, white wine & extra virgin olive oil", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/clam-1920w.jpg" },
+                  { id: "p11", name: "LINGUINE GAMBERONI", description: "with sautéed prawns in tomato Rosé sauce", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ling+PARWNS-1920w.jpg" },
+                  { id: "p12", name: "RISOTTO FUNGHI", description: "with a medley of portobellini, shiitake & shimeji mushroom, aromatics with truffle oil", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/RISOTO-funghi-1920w.jpg" },
+                  { id: "p13", name: "RISOTTO DUCK", description: "smoked Duck Breast with artichokes, sun dried tomatoes, peas and parmigiano cheese", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/risoto-duck-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Chef's Recommendations",
+              items: [
+                  { id: "cr1", name: "BOUILLABAISSE MARSEILLAISE", description: "A medley of fish & shell fish cooked in aromatic fish soup served with rouille sauce & garlic crouton", price: "$68.00", priceValue: 68.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bouiabsa-6c0226f0-1920w.jpg" },
+                  { id: "cr2", name: "PAN-SEARED RED SNAPPER", description: "mushroom vermouth sauce", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/snapper-1920w.jpg" },
+                  { id: "cr3", name: "BAKED BLACK SABLE FISH", description: "with Olive Tapende, Tomato confit, capers and lemon infused olive oil", price: "$48.00", priceValue: 48.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sable-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Henry's Specialties",
+              items: [
+                  { id: "hs1", name: "BEEF BOURGUIGNON", description: "braised beef shank in a tasty rich burgundy wine with mushrooms & onions and served on herb risotto & vegetables", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/beef+stew-1920w.jpg" },
+                  { id: "hs2", name: "DUCK BREAST", description: "roasted to your preference in a Grand Marnier orange sauce", price: "$42.00", priceValue: 42.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/duck+brest-1920w.jpg" },
+                  { id: "hs3", name: "BEEF WELLINGTON", description: "tenderloin of beef wrapped with prosciutto, foie gras purée, mushroom & truffle duxelle, baked in a flaky puff pastry", price: "$65.00", priceValue: 65.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/wellington-1920w.jpg" },
+                  { id: "hs4", name: "RACK OF LAMB", description: "with a Provençale herbs crust and rosemary jus", price: "$65.00", priceValue: 65.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lamb-1920w.jpg" },
+                  { id: "hs5", name: "PORK MEDALLION", description: "with caramelized apple & blue cheese", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork+cut-1920w.jpg" },
+                  { id: "hs6", name: "ROAST CHICKEN", description: "succulent boneless free range chicken marinated in lemon garlic & rosemary roasted to perfection", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/roast+chix-585accf2-1920w.jpg" },
+                  { id: "hs7", name: "ROASTED RABBIT SADDLE ROULADE", description: "wrapped with proscuitto and wild morel mushroom", price: "$45.00", priceValue: 45.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/rabbit-1920w.jpg" },
+                  { id: "hs8", name: "PORK KNUCKLE", description: "Roasted cracking pork hock with sauerkrout", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork-Kn-1920w.jpg" },
+                  { id: "hs9", name: "VEAL T-BONE", description: "Grilled Veal T-Bone rubbed with garlic, lemon juice rosemary & ex virgin olive oil, jus de viande", price: "$48.00", priceValue: 48.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/T+bone-2f1e27c1-1920w.jpg" },
+                  { id: "hs10", name: "CASSOULET TOULOUSE", description: "A hearty french bean stew, baked with duck confit, sausage, and pork", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/casslout+2-1920w.jpg" },
+                  { id: "hs11", name: "DUCK CONFIT PERIGOURDINE", description: "Traditional slow cooked duck leg with sauteed mushroom, foie gars mousse madeira wine & truffle jus", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/DUCK+CONFIT-d1436af0-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Homemade Desserts",
+              items: [
+                  { id: "d1", name: "SIGNATURE CHEESE CAKE", description: "with brandied blueberries", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cheese+cake-1920w.jpg" },
+                  { id: "d2", name: "CHOCOLATE GANACHE", description: "Kahlua and chocolate mousse glazed with shiny ganache", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chcoc-cake-1920w.jpg" },
+                  { id: "d3", name: "CRÈME BRULÉE", description: "(Not available for take-out) crisp caramelized vanilla cream custard with berries", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/crebe-4c7616e9-1920w.jpg" },
+                  { id: "d4", name: "LEMON TART", description: "with meringue and berries", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lomon+t-1920w.jpg" },
+                  { id: "d5", name: "FRUITS SHERBET", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/SHERBET-6ccd5d65-1920w.jpg" },
+                  { id: "d6", name: "NOUGAT GLACEE", description: "nougat ice cream with almond, pistachios", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ice+cream+2-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Coffee & Tea",
+              items: [
+                  { id: "ct1", name: "COFFEE", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/coffee-b6505900-1920w.jpg" },
+                  { id: "ct2", name: "TEA", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tea-1920w.jpg" },
+                  { id: "ct3", name: "LATTE", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/latte-fde0fdcf-1920w.jpg" },
+                  { id: "ct4", name: "ESPRESSO", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/espso-e73c4940-1920w.jpg" },
+                  { id: "ct5", name: "AMERICANO", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/amico-8087362e-1920w.jpg" },
+                  { id: "ct6", name: "CAPUCCINO", price: "$6.50", priceValue: 6.50, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cappio-86361fdc-1920w.jpg" },
+                  { id: "ct7", name: "ICED COFFEE", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ice-coffee-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Specialty Coffee/Tea",
+              items: [
+                  { id: "sct1", name: "BLUEBERRY TEA", description: "amaretto Grand Mariner", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bluetea-5afb2fb9-f0e9d2f8-1920w.jpg" },
+                  { id: "sct2", name: "MONTE CRISTO", description: "Kahlua, Grand Mariner, whipped cream", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                  { id: "sct3", name: "SPANISH", description: "Kahlua, brandy", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                  { id: "sct4", name: "IRISH", description: "whiskey, whipped cream", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                  { id: "sct5", name: "TUSCAN", description: "sambuca, Baileys", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                  { id: "sct6", name: "ITALIAN", description: "amaretto, Baileys", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                  { id: "sct7", name: "B-52", description: "Kahlua, Baileys, Grand Mariner", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+              ]
+          },
+          {
+              title: "Wine List",
+              items: [
+                  { id: "w1", name: "HOUSE RED (LE VILLAGEOIS)", description: "FRANCE (DRY)", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOUSE.RED-1920w.jpg" },
+                  { id: "w2", name: "HOUSE RED (SANGIOVESE)", description: "GIACONDI ITALY (DRY)", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/SANGIO-cb3f8e5f-1920w.jpg" },
+                  { id: "w3", name: "SHIRAZ BIN 555", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/555-f494f53e-08b89368-1920w.jpg" },
+                  { id: "w4", name: "PINOT NOIR", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chianti-1920w.jpg" },
+                  { id: "w5", name: "CHIANTI", description: "GABBIANO ITALY", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chianti-1920w.jpg" },
+                  { id: "w6", name: "CÔTES DU RHÔNE", description: "FRANCE", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cote-9a70d986-1920w.jpg" },
+                  { id: "w7", name: "MERLOT", description: "SANDHILL BC", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sandhill-259eaa5e-1920w.jpg" },
+                  { id: "w8", name: "MERLOT-CAB", description: "FRANCE", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/JP-Merlot-cab-1920w.jpg" },
+                  { id: "w10", name: "HOUSE WHITE (HOCHTALER)", description: "B.C. (DRY)", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOCHT-1920w.jpg" },
+                  { id: "w12", name: "GEWÜZTRAMINER", description: "PFAFFENHEIM FRANCE", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/gew-e80e0a27-1920w.jpg" },
+                  { id: "w13", name: "RIESLING", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/oysterbay-37dd48ea-1920w.jpg" },
+                  { id: "w14", name: "SAUVIGNON BLANC", description: "MISSION HILL RESERVE BC", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/oysterbay-37dd48ea-1920w.jpg" },
+                  { id: "w15", name: "PINOT GRIS", description: "PFAFFENHEIM", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pinot-fris-1920w.jpg" },
+                  { id: "w17", name: "PINOT GRIGIO", description: "MASI ITALY", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/masi-white-1920w.jpg" },
+              ]
+          },
+      ];
+      
+      const AboutSection = () => {
+          const ListItem = ({ children }) => (
+              <li className="flex items-start gap-3">
+                  <i className="fas fa-check text-colore-sette mt-1"></i>
+                  <span>{children}</span>
+              </li>
+          );
+
+          return (
+              <section id="about" className="py-20 relative z-10 w-full bg-black/90 text-colore-due text-center">
+                  <div className="container mx-auto px-5 max-w-4xl">
+                      <h2 className="text-4xl text-white mb-6">About Us</h2>
+                      <p className="text-lg leading-relaxed mb-10 max-w-3xl mx-auto">
+                          Henry's Kitchen Pasta & Grill is an appointment-only restaurant dedicated to providing an exquisite pasta and grill experience. We insist on using the freshest ingredients to bring you an unforgettable dining experience.
+                      </p>
+                      <div className="bg-colore-quattro/80 border border-colore-tre text-left rounded-lg p-8 max-w-3xl mx-auto">
+                          <h4 className="text-xl text-white font-semibold mb-5 flex items-center gap-3">
+                              <i className="fas fa-info-circle text-colore-otto"></i> Important Information
+                          </h4>
+                          <ul className="space-y-3 text-colore-due">
+                              <ListItem>Book one day in advance and pre-order (appetizer, main, dessert).</ListItem>
+                              <ListItem>We recommend bringing your own containers for leftovers.</ListItem>
+                              <ListItem>Cash, transfer, or Interac payments are encouraged.</ListItem>
+                              <ListItem>A 20% service fee is automatically included.</ListItem>
+                              <ListItem>BYOB welcome. Corkage fee is $30 per 750ml bottle.</ListItem>
+                          </ul>
+                      </div>
+                  </div>
+              </section>
+          );
+      };
+
+      const BookingSection = () => {
+          return (
+              <section id="reservations" className="py-20 relative z-10 w-full bg-black/90 text-white text-center">
+                  <div className="container mx-auto px-5">
+                      <h2 className="text-4xl mb-6">Book Your Table</h2>
+                      <p className="max-w-3xl mx-auto text-lg text-colore-due mb-8">
+                          Please book one day in advance and pre-order your meal to enjoy our meticulously prepared pasta and grill dishes. We look forward to providing you with an unforgettable dining experience.
+                      </p>
+                      <a 
+                          href="tel:7783558787" 
+                          className="inline-block bg-colore-cinque text-white px-10 py-4 text-lg font-semibold tracking-wider transition-all duration-300 hover:bg-colore-nove hover:scale-105"
+                      >
+                          CALL TO BOOK NOW
+                      </a>
+                  </div>
+              </section>
+          );
+      };
+
+      const Footer = () => {
+          const SocialLink = ({ href, icon }) => (
+              <a href={href} className="w-10 h-10 rounded-full bg-colore-tre text-white flex items-center justify-center text-lg transition-colors hover:bg-colore-cinque">
+                  <i className={icon}></i>
+              </a>
+          );
+
+          return (
+              <footer id="contact" className="py-20 bg-colore-uno/90 text-center relative z-10 w-full">
+                  <div className="container mx-auto px-5">
+                      <h2 className="text-3xl text-colore-tre tracking-widest mb-4">Henry's Kitchen</h2>
+                      <p className="text-colore-tre mb-6">
+                          (778) 355-8787 | henryskitchen@hotmail.com | Fridays, Saturdays & Sundays (dinner only)
+                      </p>
+                      <div className="flex justify-center gap-5 mb-10">
+                          <SocialLink href="#" icon="fab fa-instagram" />
+                          <SocialLink href="#" icon="fab fa-facebook-f" />
+                          <SocialLink href="#" icon="fab fa-twitter" />
+                          <SocialLink href="#" icon="fab fa-tripadvisor" />
+                      </div>
+                      <div className="mb-8">
+                          <h2 className="text-2xl text-colore-tre">Henry's Kitchen</h2>
+                          <p className="text-colore-tre text-sm">Pasta & Grill</p>
+                      </div>
+                      <p className="text-colore-tre text-sm">
+                          &copy; {new Date().getFullYear()} Henry's Kitchen Pasta & Grill. All Rights Reserved.
+                      </p>
+                  </div>
+              </footer>
+          );
+      };
+      
+      const FullscreenPrompt = () => {
+          const [isVisible, setIsVisible] = useState(true);
+
+          const enterFullscreen = () => {
+              document.documentElement.requestFullscreen().then(() => {
+                  setIsVisible(false);
+              }).catch(err => {
+                  console.error(`Fullscreen request failed: ${err.message}`);
+                  setIsVisible(false);
+              });
+          };
+          
+          if (!isVisible) return null;
+
+          return (
+              <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-[9999] text-white text-center backdrop-blur-sm">
+                  <p className="text-2xl mb-6">Enter Fullscreen for a Better Visual Experience</p>
+                  <button
+                      onClick={enterFullscreen}
+                      className="px-8 py-4 bg-orange-600 text-white rounded-lg text-lg font-semibold cursor-pointer transition-all duration-300 hover:bg-orange-500 hover:scale-105"
+                  >
+                      Enter Fullscreen
+                  </button>
+              </div>
+          );
+      };
+      
+      const GallerySection = ({ onImageClick }) => {
+          const galleryImages = [
+              'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/wellington-1920w.jpg',
+              'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/duck+brest-1920w.jpg',
+              'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cheese+cake-1920w.jpg',
+              'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bouiabsa-6c0226f0-1920w.jpg'
+          ];
+
+          return (
+              <section id="gallery" className="py-20 bg-white/90 relative z-10 w-full">
+                  <div className="container mx-auto px-5 text-center">
+                      <h2 className="text-4xl mb-12">Food Gallery</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          {galleryImages.map((src, index) => (
+                              <div
+                                  key={index}
+                                  className="h-80 bg-cover bg-center relative overflow-hidden transition-transform duration-300 hover:scale-105 cursor-pointer"
+                                  style={{ backgroundImage: `url(${src})` }}
+                                  onClick={() => onImageClick(src)}
+                              >
+                                  <div className="absolute inset-0 bg-black opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              </section>
+          );
+      };
+
+      const Header = ({ onCartClick, cartItemCount, onMenuClick }) => {
+          const [isHidden, setIsHidden] = useState(false);
+
+          useEffect(() => {
+              let lastScrollTop = 0;
+              const handleScroll = () => {
+                  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                  if (scrollTop > lastScrollTop && scrollTop > 200) {
+                      setIsHidden(true);
+                  } else {
+                      setIsHidden(false);
+                  }
+                  lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+              };
+
+              window.addEventListener('scroll', handleScroll);
+              return () => window.removeEventListener('scroll', handleScroll);
+          }, []);
+
+          return (
+              <header className={`bg-colore-quattro p-4 fixed w-full top-0 z-[1000] flex justify-between items-center transition-transform duration-300 ease-in-out ${isHidden ? '-translate-y-full' : 'translate-y-0'}`}>
+                  <a href="#home" className="text-white font-bodoni text-xl md:text-2xl w-2/3 md:w-auto">
+                      <h2>Henry's Kitchen Pasta & Grill</h2>
+                  </a>
+                  
+                  <div className="flex items-center gap-4">
+                      <div className="hidden lg:flex items-center gap-5">
+                          <a href="#reservations" className="bg-colore-cinque text-white px-5 py-2 text-sm tracking-widest font-semibold transition-colors hover:bg-colore-nove">
+                              BOOK NOW
+                          </a>
+                          <button onClick={onCartClick} className="relative text-white text-2xl">
+                              <i className="fas fa-shopping-cart"></i>
+                              {cartItemCount > 0 && (
+                                  <span className="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                      {cartItemCount}
+                                  </span>
+                              )}
+                          </button>
+                      </div>
+
+                      <button onClick={onCartClick} className="relative text-white text-2xl lg:hidden">
+                          <i className="fas fa-shopping-cart"></i>
+                          {cartItemCount > 0 && (
+                              <span className="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                  {cartItemCount}
+                              </span>
+                          )}
+                      </button>
+                      
+                      <button onClick={onMenuClick} className="lg:hidden text-white text-2xl bg-transparent border-none cursor-pointer z-[1001]">
+                          <i className="fas fa-bars"></i>
+                      </button>
+                  </div>
+              </header>
+          );
+      };
+
+      const HeroSlider = () => {
+          const slides = [
+              {
+                  image: 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/rest-1920w.jpg',
+                  title: "Henry's Kitchen Pasta & Grill",
+                  subtitle: 'An Exquisite Pasta & Grill Experience'
+              },
+              {
+                  image: 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/vacation+nov-1920w.jpg',
+                  title: 'By Appointment Only',
+                  subtitle: 'Please book one day in advance and pre-order your meal.'
+              },
+              {
+                  image: 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/new+year+note-1920w.jpg',
+                  title: 'A Fine Dining Experience',
+                  subtitle: 'You are welcome to bring your own wine. Corkage fee is $30 per 750ml.'
+              }
+          ];
+          const [currentSlide, setCurrentSlide] = useState(0);
+
+          const nextSlide = useCallback(() => {
+              setCurrentSlide(prev => (prev + 1) % slides.length);
+          }, []);
+
+          useEffect(() => {
+              const interval = setInterval(nextSlide, 5000);
+              return () => clearInterval(interval);
+          }, [nextSlide]);
+
+          return (
+              <section id="home" className="h-screen relative">
+                  {slides.map((slide, index) => (
+                      <div
+                          key={index}
+                          className={`absolute inset-0 h-full w-full bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+                          style={{ backgroundImage: `url(${slide.image})` }}
+                      >
+                          <div className="w-full h-full flex items-center justify-center bg-black bg-opacity-40">
+                              <div className="text-center text-white max-w-3xl p-5 z-10 bg-black bg-opacity-60 rounded-lg mx-4">
+                                  <h1 className="text-4xl md:text-6xl mb-4 tracking-wider">{slide.title}</h1>
+                                  <p className="text-lg md:text-xl mb-6">{slide.subtitle}</p>
+                              </div>
+                          </div>
+                      </div>
+                  ))}
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4 z-10">
+                      {slides.map((_, index) => (
+                          <button
+                              key={index}
+                              onClick={() => setCurrentSlide(index)}
+                              className={`w-3 h-3 rounded-full transition-colors duration-300 ${index === currentSlide ? 'bg-white' : 'bg-white/50'}`}
+                          />
+                      ))}
+                  </div>
+              </section>
+          );
+      };
+
+      const ImageModal = ({ src, onClose }) => {
+          return (
+              <div 
+                  className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999]"
+                  onClick={onClose}
+              >
+                  <img 
+                      src={src} 
+                      alt="Enlarged view" 
+                      className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                  />
+                  <button 
+                      className="absolute top-5 right-5 text-white text-4xl"
+                      onClick={onClose}
+                  >
+                      &times;
+                  </button>
+                  <p className="absolute bottom-5 text-gray-300 text-sm tracking-wider">Click anywhere to close</p>
+              </div>
+          );
+      };
+
+      const MenuItem = ({ item, onAddToCart, onImageClick }) => {
+          return (
+              <div className="bg-white rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col">
+                  <div 
+                      className="h-56 bg-cover bg-center cursor-pointer" 
+                      style={{ backgroundImage: `url(${item.image})` }}
+                      onClick={() => onImageClick(item.image)}
+                  ></div>
+                  <div className="p-6 flex-grow flex flex-col">
+                      <h4 className="text-xl font-bold mb-2 text-colore-quattro">{item.name}</h4>
+                      <p className="text-colore-tre mb-4 text-sm flex-grow">{item.description}</p>
+                      <div className="mt-auto flex justify-between items-center">
+                          <div className="text-colore-cinque font-bold text-lg">{item.price}</div>
+                          <button 
+                              onClick={() => onAddToCart(item)}
+                              className="bg-colore-sette text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center gap-2"
+                          >
+                              <i className="fas fa-cart-plus"></i>
+                              <span>Add</span>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          );
+      };
+
+      const MenuSection = ({ onAddToCart, onImageClick }) => {
+          return (
+              <section id="menu" className="py-20 bg-colore-uno/90 relative z-10 w-full">
+                  <div className="container mx-auto px-5">
+                      <h2 className="text-4xl text-center mb-12">Our Menu</h2>
+                      {menuData.map(category => (
+                          <div key={category.title} className="mb-16">
+                              <h3 className="text-3xl text-center text-colore-quattro mb-8 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-1 after:bg-colore-cinque">
+                                  {category.title}
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                  {category.items.map(item => (
+                                      <MenuItem key={item.id} item={item} onAddToCart={onAddToCart} onImageClick={onImageClick} />
+                                  ))}
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              </section>
+          );
+      };
+
+      const MobileMenu = ({ isOpen, onClose }) => {
+          const menuItems = [
+              { href: "#home", label: "Home" },
+              { href: "#about", label: "About Us" },
+              { href: "#menu", label: "Menu" },
+              { href: "#store-info", label: "Store Info" },
+              { href: "#gallery", label: "Gallery" },
+              { href: "#reservations", label: "Booking" },
+              { href: "#contact", label: "Contact" },
+          ];
+
+          return (
+              <>
+                  <div 
+                      className={`fixed inset-0 bg-black bg-opacity-70 z-[1001] transition-opacity duration-300 lg:hidden ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                      onClick={onClose}
+                  ></div>
+                  <div className={`fixed top-0 right-0 h-full w-64 bg-colore-quattro shadow-2xl z-[1002] transform transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                      <div className="flex flex-col h-full p-8">
+                          <button onClick={onClose} className="self-end text-white text-3xl mb-8">&times;</button>
+                          <nav>
+                              <ul className="space-y-4">
+                                  {menuItems.map(item => (
+                                      <li key={item.label}>
+                                          <a href={item.href} onClick={onClose} className="text-colore-due hover:text-white text-xl transition-colors">
+                                              {item.label}
+                                          </a>
+                                      </li>
+                                  ))}
+                              </ul>
+                          </nav>
+                          <div className="mt-auto flex justify-center gap-6">
+                              <a href="#" className="text-colore-due hover:text-white text-xl transition-colors"><i className="fab fa-instagram"></i></a>
+                              <a href="#" className="text-colore-due hover:text-white text-xl transition-colors"><i className="fab fa-facebook-f"></i></a>
+                              <a href="#" className="text-colore-due hover:text-white text-xl transition-colors"><i className="fab fa-twitter"></i></a>
+                          </div>
+                      </div>
+                  </div>
+              </>
+          );
+      };
+
+      const ShoppingCart = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity }) => {
+          const totalPrice = cartItems.reduce((acc, item) => acc + item.priceValue * item.quantity, 0);
+
+          return (
+              <>
+                  <div 
+                      className={`fixed inset-0 bg-black bg-opacity-60 z-[1001] transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                      onClick={onClose}
+                  ></div>
+                  <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[1002] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                      <div className="flex flex-col h-full">
+                          <div className="flex justify-between items-center p-6 border-b">
+                              <h3 className="text-2xl font-bold">Your Order</h3>
+                              <button onClick={onClose} className="text-2xl hover:text-red-500 transition-colors">&times;</button>
+                          </div>
+                          
+                          {cartItems.length === 0 ? (
+                              <div className="flex-grow flex items-center justify-center text-center text-gray-500">
+                                  <p>Your cart is empty.</p>
+                              </div>
+                          ) : (
+                              <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                                  {cartItems.map(item => (
+                                      <div key={item.id} className="flex items-center gap-4">
+                                          <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-md" />
+                                          <div className="flex-grow">
+                                              <h4 className="font-semibold">{item.name}</h4>
+                                              <p className="text-gray-600">${item.priceValue.toFixed(2)}</p>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                              <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 border rounded">-</button>
+                                              <span>{item.quantity}</span>
+                                              <button onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 border rounded">+</button>
+                                          </div>
+                                          <button onClick={() => onRemove(item.id)} className="text-gray-400 hover:text-red-500 text-lg">
+                                              <i className="fas fa-trash-alt"></i>
+                                          </button>
+                                      </div>
+                                  ))}
+                              </div>
+                          )}
+
+                          <div className="p-6 border-t">
+                              <div className="flex justify-between items-center text-xl font-bold mb-4">
+                                  <span>Total</span>
+                                  <span>${totalPrice.toFixed(2)}</span>
+                              </div>
+                              <button className="w-full bg-colore-cinque text-white py-3 rounded-lg text-lg font-semibold hover:bg-colore-nove transition-colors disabled:bg-gray-400" disabled={cartItems.length === 0}>
+                                  Proceed to Checkout
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </>
+          );
+      };
+
+      const SideMenu = () => {
+          const menuItems = [
+              { href: "#home", icon: "fas fa-home", label: "Home" },
+              { href: "#about", icon: "fas fa-info-circle", label: "About Us" },
+              { href: "#menu", icon: "fas fa-utensils", label: "Menu" },
+              { href: "#store-info", icon: "fas fa-map-marker-alt", label: "Store Info" },
+              { href: "#gallery", icon: "fas fa-image", label: "Gallery" },
+              { href: "#reservations", icon: "fas fa-calendar-alt", label: "Booking" },
+              { href: "#contact", icon: "fas fa-phone", label: "Contact" },
+          ];
+          const [isHovered, setIsHovered] = useState(false);
+          const [isHidden, setIsHidden] = useState(false);
+
+          useEffect(() => {
+              let lastScrollTop = 0;
+              const handleScroll = () => {
+                  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                  setIsHidden(scrollTop > lastScrollTop && scrollTop > 200);
+                  lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+              };
+
+              window.addEventListener('scroll', handleScroll);
+              return () => window.removeEventListener('scroll', handleScroll);
+          }, []);
+
+          return (
+              <div 
+                  className={`hidden lg:block fixed left-0 top-1/2 -translate-y-1/2 z-[999] transition-transform duration-300 ${isHidden ? '-translate-x-full' : 'translate-x-0'}`}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+              >
+                  <div className="bg-colore-quattro rounded-r-lg shadow-lg p-3 transition-all duration-300 ease-in-out" style={{ width: isHovered ? '250px' : '70px' }}>
+                      <nav>
+                          <ul className="space-y-2">
+                              {menuItems.map(item => (
+                                  <li key={item.label}>
+                                      <a href={item.href} className="flex items-center text-colore-due hover:text-white transition-colors p-2 rounded-md overflow-hidden whitespace-nowrap">
+                                          <i className={`${item.icon} text-xl w-12 text-center`}></i>
+                                          <span className={`transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+                                              {item.label}
+                                          </span>
+                                      </a>
+                                  </li>
+                              ))}
+                          </ul>
+                      </nav>
+                  </div>
+              </div>
+          );
+      };
+      
+      const StoreInfoSection = () => {
+          const InfoCard = ({ title, icon, children }) => (
+              <div className="bg-colore-uno rounded-lg p-6 mb-6 shadow-md">
+                  <h4 className="text-xl font-bold mb-4 flex items-center gap-3">
+                      <i className={`fas ${icon} text-colore-cinque w-6`}></i> {title}
+                  </h4>
+                  <ul className="space-y-3 text-colore-tre">{children}</ul>
+              </div>
+          );
+
+          const InfoListItem = ({ icon, children }) => (
+              <li className="flex items-start gap-3">
+                  <i className={`fas ${icon} text-colore-sette mt-1 w-4 flex-shrink-0`}></i>
+                  <span>{children}</span>
+              </li>
+          );
+
+          return (
+              <section id="store-info" className="py-20 bg-white/90 relative z-10 w-full">
+                  <div className="container mx-auto px-5">
+                      <div className="flex flex-wrap lg:flex-nowrap gap-10 items-center">
+                          <div className="w-full lg:w-1/2">
+                              <h3 className="text-3xl font-bold mb-6 pb-4 relative inline-block after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-16 after:h-1 after:bg-colore-cinque">
+                                  Contact Information
+                              </h3>
+                              
+                              <InfoCard title="Basic Info" icon="fa-store">
+                                  <InfoListItem icon="fa-phone"><strong>Phone:</strong> (778) 355-8787</InfoListItem>
+                                  <InfoListItem icon="fa-envelope"><strong>Email:</strong> henryskitchen@hotmail.com</InfoListItem>
+                                  <InfoListItem icon="fa-clock"><strong>Hours:</strong> Fridays, Saturdays & Sundays (dinner only)</InfoListItem>
+                              </InfoCard>
+
+                              <InfoCard title="Important Reminders" icon="fa-info-circle">
+                                  <InfoListItem icon="fa-check">Book one day in advance and pre-order.</InfoListItem>
+                                  <InfoListItem icon="fa-check">Bring your own containers for leftovers.</InfoListItem>
+                                  <InfoListItem icon="fa-check">Cash, transfer, or Interac payments are encouraged.</InfoListItem>
+                                  <InfoListItem icon="fa-check">A 20% service fee is automatically included.</InfoListItem>
+                                  <InfoListItem icon="fa-check">BYOB welcome. Corkage fee is $30 per 750ml.</InfoListItem>
+                                  <a href="#reservations" className="mt-4 inline-block bg-colore-cinque text-white px-6 py-2 rounded-md font-semibold hover:bg-colore-nove transition-colors">
+                                      Book Online
+                                  </a>
+                              </InfoCard>
+                          </div>
+
+                          <div className="w-full lg:w-1/2 h-80 md:h-96 rounded-lg overflow-hidden shadow-lg">
+                              <iframe
+                                  className="w-full h-full border-0"
+                                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2602.688147929918!2d-123.1207373846209!3d49.28272927933139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5486717886a0b3f7%3A0x530f7a755a5c531d!2sVancouver%2C%2C%20BC!5e0!3m2!1sen!2sca!4v1689000000000!5m2!1sen!2sca"
+                                  allow="fullscreen"
+                                  loading="lazy"
+                                  referrerPolicy="no-referrer-when-downgrade"
+                              ></iframe>
+                          </div>
+                      </div>
+                  </div>
+              </section>
+          );
+      };
+
+      const VideoBackground = () => {
+          const videoRef = useRef(null);
+          const [isMuted, setIsMuted] = useState(true);
+          const [isPaused, setIsPaused] = useState(false);
+
+          const toggleMute = () => {
+              if (videoRef.current) {
+                  videoRef.current.muted = !videoRef.current.muted;
+                  setIsMuted(videoRef.current.muted);
+              }
+          };
+
+          const togglePlay = () => {
+              if (videoRef.current) {
+                  if (videoRef.current.paused) {
+                      videoRef.current.play();
+                      setIsPaused(false);
+                  } else {
+                      videoRef.current.pause();
+                      setIsPaused(true);
+                  }
+              }
+          };
+
+          return (
+              <>
+                  <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden">
+                      <video
+                          ref={videoRef}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover"
+                      >
+                          <source src="https://assets.codepen.io/3364143/sample.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                      </video>
+                      <div className="absolute inset-0 bg-slate-900/70"></div>
+                  </div>
+                  <div className="fixed bottom-5 right-5 z-50 flex gap-3">
+                      <button onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"} className="bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/80 transition-colors">
+                          <i className={`fas ${isMuted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
+                      </button>
+                      <button onClick={togglePlay} title={isPaused ? "Play" : "Pause"} className="bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/80 transition-colors">
+                          <i className={`fas ${isPaused ? 'fa-play' : 'fa-pause'}`}></i>
+                      </button>
+                  </div>
+              </>
+          );
+      };
+      
+      // END OF COMPONENTS
+
+      // MAIN APP COMPONENT
+      const App = () => {
+          const [cartItems, setCartItems] = useState([]);
+          const [isCartOpen, setIsCartOpen] = useState(false);
+          const [selectedImage, setSelectedImage] = useState(null);
+          const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+          const handleAddToCart = (item) => {
+              setCartItems(prevItems => {
+                  const existingItem = prevItems.find(cartItem => cartItem.id === item.id);
+                  if (existingItem) {
+                      return prevItems.map(cartItem =>
+                          cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
+                      );
+                  }
+                  return [...prevItems, { ...item, quantity: 1 }];
+              });
+              setIsCartOpen(true);
+          };
+
+          const handleRemoveFromCart = (itemId) => {
+              setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+          };
+
+          const handleUpdateQuantity = (itemId, quantity) => {
+              if (quantity <= 0) {
+                  handleRemoveFromCart(itemId);
+              } else {
+                  setCartItems(prevItems =>
+                      prevItems.map(item =>
+                          item.id === itemId ? { ...item, quantity } : item
+                      )
+                  );
+              }
+          };
+
+          const handleOpenImage = (src) => {
+              setSelectedImage(src);
+          };
+          
+          return (
+              <div className="bg-white font-roboto">
+                  <FullscreenPrompt />
+                  <VideoBackground />
+
+                  <Header 
+                      onCartClick={() => setIsCartOpen(true)} 
+                      cartItemCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+                      onMenuClick={() => setIsMobileMenuOpen(true)}
+                  />
+                  
+                  <SideMenu />
+                  <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+                  
+                  <ShoppingCart
+                      isOpen={isCartOpen}
+                      onClose={() => setIsCartOpen(false)}
+                      cartItems={cartItems}
+                      onRemove={handleRemoveFromCart}
+                      onUpdateQuantity={handleUpdateQuantity}
+                  />
+
+                  {selectedImage && <ImageModal src={selectedImage} onClose={() => setSelectedImage(null)} />}
+                  
+                  <main>
+                      <HeroSlider />
+                      <AboutSection />
+                      <MenuSection onAddToCart={handleAddToCart} onImageClick={handleOpenImage} />
+                      <StoreInfoSection />
+                      <GallerySection onImageClick={handleOpenImage} />
+                      <BookingSection />
+                  </main>
+                  
+                  <Footer />
+              </div>
+          );
+      };
+
+      // RENDER THE APP
+      const rootElement = document.getElementById('root');
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(
+        <React.StrictMode>
+          <App />
+        </React.StrictMode>
+      );
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
