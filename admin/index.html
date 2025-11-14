@@ -60,13 +60,6 @@
         }
         #toast.success { background-color: #28a745; }
         #toast.error { background-color: #dc3545; }
-        .status-badge {
-            @apply px-2 py-1 rounded-full text-xs font-semibold;
-        }
-        .status-pending { @apply bg-yellow-100 text-yellow-800; }
-        .status-confirmed { @apply bg-blue-100 text-blue-800; }
-        .status-completed { @apply bg-green-100 text-green-800; }
-        .status-cancelled { @apply bg-red-100 text-red-800; }
     </style>
 </head>
 <body class="bg-colore-uno text-colore-quattro">
@@ -132,11 +125,142 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5m6PuueTv4OcabjS9fabmL3XnRQ_qcwjBavcHRiQjxRY68MXaCxh-EyK243aRVohy/exec';
         const ADMIN_PASSWORD = 'henry2024';
 
+        const menuData = [
+            {
+                title: "Breads & Soups",
+                items: [
+                    { id: "b1", name: "HOME MADE BREAD", description: "focaccia with balsamic reduction & extra virgin olive oil, whipped butter", price: "$4.95", priceValue: 4.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bread-1920w.jpg" },
+                    { id: "b2", name: "GARLIC BREAD", description: "sliced home made crusty french bread toasted with garlic butter", price: "$4.95", priceValue: 4.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/garlic-1920w.jpg" },
+                    { id: "b3", name: "PORK RILLETTES AND BREAD", description: "a rustic French pork pâté spread (brown pork jam) with homemade bread", price: "$6.95", priceValue: 6.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork+pate+bread-1920w.jpg" },
+                    { id: "b4", name: "TOMATO CHEESE BREAD", description: "tomato marinaram sauce, mazzarella & parmesan cheese melted on focaccia bread", price: "$8.95", priceValue: 8.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tomato+bread-1920w.jpg" },
+                    { id: "s1", name: "FRENCH ONION SOUP", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/onion-soup-ff70c88d-1920w.jpg" },
+                    { id: "s2", name: "SEAFOOD CHOWDER", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chowder-a2521c66-1920w.jpg" },
+                    { id: "s3", name: "LOBSTER BISQUE", description: "with lobster arancini", price: "$24.00", priceValue: 24.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lobster-bisq-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Appetizers & Salads",
+                items: [
+                    { id: "sa1", name: "HOUSE SALAD", description: "spring mix and crisp romaine lettuce tossed with our house dressing and balsamic reduction", price: "(S) $14.95 (L)$16.95", priceValue: 14.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/hou.salad-1920w.jpg" },
+                    { id: "sa2", name: "CAESAR SALAD", description: "crisp romaine lettuce with homemade Caesar dressing, parmesan cheese and homemade garlic crouton", price: "(S) $14.95 (L)$16.95", priceValue: 14.95, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ceaser-1920w.jpg" },
+                    { id: "sa3", name: "SALMON GRAVLAX", description: "with orange fennel salad", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/samoln+G-1920w.jpg" },
+                    { id: "sa4", name: "MUSHROOM FRICASSEE", description: "sautéed assorted mushrooms on baby spinach salad with balsamic reduction & walnuts", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/mushroom-Fri-1920w.jpg" },
+                    { id: "sa5", name: "BAKED GOAT CHEESE SALAD", description: "with pistachio crust on spinach, pear & mixed berry salad", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/GOAT-CHEESE-d558f8b1-afba1750-1920w.jpg" },
+                    { id: "sa6", name: "BEEF CARPACCIO", description: "Dressed with Dijon mustard, lemon, capers, parmigigiano, truffle oil", price: "$28.00", priceValue: 28.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/beef-carpio-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Hot Appetizers",
+                items: [
+                    { id: "ha1", name: "ESCARGOTS A LAD PARISIENNE", description: "baked snails in a cognac, garlic, & herb butter", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ecsago-a9f326c4-1920w.jpg" },
+                    { id: "ha2", name: "SIGNATURE CRAB CAKE", description: "served on avocado, tomato salsa, mango couils & wasabi aioli", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/carb+cake-1920w.jpg" },
+                    { id: "ha3", name: "FROG LEGS FEUILLETTES", description: "sautéed with mushroom & Riesling cream sauce served in a flaky puff pastry", price: "$28.00", priceValue: 28.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/frog+legs-1920w.jpg" },
+                    { id: "ha4", name: "ROASTED QUAIL & FOIE GRAS", description: "Roasted quail stuffed with wild rice, mushroom & foie gras, wrapped in prosciutto, served with grapes & walnuts", price: "$28.00", priceValue: 28.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/quail+app-1920w.jpg" },
+                    { id: "ha5", name: "CRISP PRAWNS WRAPPED IN ANGEL HAIR", description: "served on carrot raisin salad with mango salsa", price: "$18.00", priceValue: 18.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/crisp-prawns-c7f0c313-1920w.jpg" },
+                ]
+            },
+            {
+                title: "The Classic Art of Pasta",
+                items: [
+                    { id: "p1", name: "PENNE POMODORO", description: "with Italian plum tomatoes and fresh basil", price: "$30.00", priceValue: 30.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tom-1920w.jpg" },
+                    { id: "p2", name: "PENNE ALFREDO", description: "tossed in a rich parmigiano cheese cream sauce", price: "$30.00", priceValue: 30.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cream-1920w.jpg" },
+                    { id: "p3", name: "LINGUINE CARBONARA", description: "with pancetta, parmesan cheese, and custard cream sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/caro-pasta-1920w.jpg" },
+                    { id: "p4", name: "LINGUINE POLLO PESTO", description: "with chicken tossed in fresh basil pesto cream sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pesto-1920w.jpg" },
+                    { id: "p5", name: "LINGUINE SALMON AFFUMICATO", description: "with smoked salmon and sun-dried tomatoes in a light cream sauce", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/salmon-pasta-1920w.jpg" },
+                    { id: "p6", name: "LINGUINE AGLIO OLIO", description: "with garlic, chili, white wine, butter, basil, parsley, and extra virgin olive oil", price: "$30.00", priceValue: 30.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/aliolo-6d7b7ab1-1920w.jpg" },
+                    { id: "p7", name: "LINGUINE AMATRICIANA", description: "with pancetta, garlic, shallot, chili, spicy tomatoes sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/AM-8032bb9b-1920w.jpg" },
+                    { id: "p8", name: "LINGUINE SALSICCIA", description: "with sautéed Italian sausage in spicy tomato sauce", price: "$32.00", priceValue: 32.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sausage-1920w.jpg" },
+                    { id: "p9", name: "LINGUINE PESCATORA", description: "with mussels, prawns, scallops, clams, and calamari in spicy tomato sauce", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/seafood+pasta-1920w.jpg" },
+                    { id: "p10", name: "LINGUINE VONGOLE", description: "with clam in garlic, chili, white wine & extra virgin olive oil", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/clam-1920w.jpg" },
+                    { id: "p11", name: "LINGUINE GAMBERONI", description: "with sautéed prawns in tomato Rosé sauce", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ling+PARWNS-1920w.jpg" },
+                    { id: "p12", name: "RISOTTO FUNGHI", description: "with a medley of portobellini, shiitake & shimeji mushroom, aromatics with truffle oil", price: "$35.00", priceValue: 35.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/RISOTO-funghi-1920w.jpg" },
+                    { id: "p13", name: "RISOTTO DUCK", description: "smoked Duck Breast with artichokes, sun dried tomatoes, peas and parmigiano cheese", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/risoto-duck-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Chef's Recommendations",
+                items: [
+                    { id: "cr1", name: "BOUILLABAISSE MARSEILLAISE", description: "A medley of fish & shell fish cooked in aromatic fish soup served with rouille sauce & garlic crouton", price: "$68.00", priceValue: 68.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bouiabsa-6c0226f0-1920w.jpg" },
+                    { id: "cr2", name: "PAN-SEARED RED SNAPPER", description: "mushroom vermouth sauce", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/snapper-1920w.jpg" },
+                    { id: "cr3", name: "BAKED BLACK SABLE FISH", description: "with Olive Tapende, Tomato confit, capers and lemon infused olive oil", price: "$48.00", priceValue: 48.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sable-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Henry's Specialties",
+                items: [
+                    { id: "hs1", name: "BEEF BOURGUIGNON", description: "braised beef shank in a tasty rich burgundy wine with mushrooms & onions and served on herb risotto & vegetables", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/beef+stew-1920w.jpg" },
+                    { id: "hs2", name: "DUCK BREAST", description: "roasted to your preference in a Grand Marnier orange sauce", price: "$42.00", priceValue: 42.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/duck+brest-1920w.jpg" },
+                    { id: "hs3", name: "BEEF WELLINGTON", description: "tenderloin of beef wrapped with prosciutto, foie gras purée, mushroom & truffle duxelle, baked in a flaky puff pastry", price: "$65.00", priceValue: 65.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/wellington-1920w.jpg" },
+                    { id: "hs4", name: "RACK OF LAMB", description: "with a Provençale herbs crust and rosemary jus", price: "$65.00", priceValue: 65.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lamb-1920w.jpg" },
+                    { id: "hs5", name: "PORK MEDALLION", description: "with caramelized apple & blue cheese", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork+cut-1920w.jpg" },
+                    { id: "hs6", name: "ROAST CHICKEN", description: "succulent boneless free range chicken marinated in lemon garlic & rosemary roasted to perfection", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/roast+chix-585accf2-1920w.jpg" },
+                    { id: "hs7", name: "ROASTED RABBIT SADDLE ROULADE", description: "wrapped with proscuitto and wild morel mushroom", price: "$45.00", priceValue: 45.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/rabbit-1920w.jpg" },
+                    { id: "hs8", name: "PORK KNUCKLE", description: "Roasted cracking pork hock with sauerkrout", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork-Kn-1920w.jpg" },
+                    { id: "hs9", name: "VEAL T-BONE", description: "Grilled Veal T-Bone rubbed with garlic, lemon juice rosemary & ex virgin olive oil, jus de viande", price: "$48.00", priceValue: 48.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/T+bone-2f1e27c1-1920w.jpg" },
+                    { id: "hs10", name: "CASSOULET TOULOUSE", description: "A hearty french bean stew, baked with duck confit, sausage, and pork", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/casslout+2-1920w.jpg" },
+                    { id: "hs11", name: "DUCK CONFIT PERIGOURDINE", description: "Traditional slow cooked duck leg with sauteed mushroom, foie gars mousse madeira wine & truffle jus", price: "$38.00", priceValue: 38.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/DUCK+CONFIT-d1436af0-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Homemade Desserts",
+                items: [
+                    { id: "d1", name: "SIGNATURE CHEESE CAKE", description: "with brandied blueberries", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cheese+cake-1920w.jpg" },
+                    { id: "d2", name: "CHOCOLATE GANACHE", description: "Kahlua and chocolate mousse glazed with shiny ganache", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chcoc-cake-1920w.jpg" },
+                    { id: "d3", name: "CRÈME BRULÉE", description: "(Not available for take-out) crisp caramelized vanilla cream custard with berries", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/crebe-4c7616e9-1920w.jpg" },
+                    { id: "d4", name: "LEMON TART", description: "with meringue and berries", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lomon+t-1920w.jpg" },
+                    { id: "d5", name: "FRUITS SHERBET", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/SHERBET-6ccd5d65-1920w.jpg" },
+                    { id: "d6", name: "NOUGAT GLACEE", description: "nougat ice cream with almond, pistachios", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ice+cream+2-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Coffee & Tea",
+                items: [
+                    { id: "ct1", name: "COFFEE", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/coffee-b6505900-1920w.jpg" },
+                    { id: "ct2", name: "TEA", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tea-1920w.jpg" },
+                    { id: "ct3", name: "LATTE", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/latte-fde0fdcf-1920w.jpg" },
+                    { id: "ct4", name: "ESPRESSO", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/espso-e73c4940-1920w.jpg" },
+                    { id: "ct5", name: "AMERICANO", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/amico-8087362e-1920w.jpg" },
+                    { id: "ct6", name: "CAPUCCINO", price: "$6.50", priceValue: 6.50, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cappio-86361fdc-1920w.jpg" },
+                    { id: "ct7", name: "ICED COFFEE", price: "$6.00", priceValue: 6.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ice-coffee-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Specialty Coffee/Tea",
+                items: [
+                    { id: "sct1", name: "BLUEBERRY TEA", description: "amaretto Grand Mariner", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bluetea-5afb2fb9-f0e9d2f8-1920w.jpg" },
+                    { id: "sct2", name: "MONTE CRISTO", description: "Kahlua, Grand Mariner, whipped cream", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                    { id: "sct3", name: "SPANISH", description: "Kahlua, brandy", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                    { id: "sct4", name: "IRISH", description: "whiskey, whipped cream", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                    { id: "sct5", name: "TUSCAN", description: "sambuca, Baileys", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                    { id: "sct6", name: "ITALIAN", description: "amaretto, Baileys", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                    { id: "sct7", name: "B-52", description: "Kahlua, Baileys, Grand Mariner", price: "$15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/irish-coffee-1920w.jpg" },
+                ]
+            },
+            {
+                title: "Wine List",
+                items: [
+                    { id: "w1", name: "HOUSE RED (LE VILLAGEOIS)", description: "FRANCE (DRY)", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOUSE.RED-1920w.jpg" },
+                    { id: "w2", name: "HOUSE RED (SANGIOVESE)", description: "GIACONDI ITALY (DRY)", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/SANGIO-cb3f8e5f-1920w.jpg" },
+                    { id: "w3", name: "SHIRAZ BIN 555", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/555-f494f53e-08b89368-1920w.jpg" },
+                    { id: "w4", name: "PINOT NOIR", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chianti-1920w.jpg" },
+                    { id: "w5", name: "CHIANTI", description: "GABBIANO ITALY", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chianti-1920w.jpg" },
+                    { id: "w6", name: "CÔTES DU RHÔNE", description: "FRANCE", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cote-9a70d986-1920w.jpg" },
+                    { id: "w7", name: "MERLOT", description: "SANDHILL BC", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sandhill-259eaa5e-1920w.jpg" },
+                    { id: "w8", name: "MERLOT-CAB", description: "FRANCE", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/JP-Merlot-cab-1920w.jpg" },
+                    { id: "w10", name: "HOUSE WHITE (HOCHTALER)", description: "B.C. (DRY)", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOCHT-1920w.jpg" },
+                    { id: "w12", name: "GEWÜZTRAMINER", description: "PFAFFENHEIM FRANCE", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/gew-e80e0a27-1920w.jpg" },
+                    { id: "w13", name: "RIESLING", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/oysterbay-37dd48ea-1920w.jpg" },
+                    { id: "w14", name: "SAUVIGNON BLANC", description: "MISSION HILL RESERVE BC", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/oysterbay-37dd48ea-1920w.jpg" },
+                    { id: "w15", name: "PINOT GRIS", description: "PFAFFENHEIM", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pinot-fris-1920w.jpg" },
+                    { id: "w17", name: "PINOT GRIGIO", description: "MASI ITALY", price: "(8OZ) $15.00", priceValue: 15.00, image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/masi-white-1920w.jpg" },
+                ]
+            },
+        ];
+
         const app = {
             state: {
                 orders: [],
                 filteredOrders: [],
-                menuItems: [],
                 view: 'dashboard',
             },
 
@@ -156,7 +280,7 @@
                     viewContent: document.getElementById('view-content'),
                     sidebarLinks: document.querySelectorAll('.sidebar-link'),
                     toast: document.getElementById('toast'),
-                    mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+                    mobileMenuBtn: document.getElementById('mobile-menu-btn'), // Not implemented yet but selector ready
                 };
             },
 
@@ -169,18 +293,13 @@
                 window.addEventListener('hashchange', () => this.handleRouteChange());
                 this.dom.sidebarLinks.forEach(link => {
                     link.addEventListener('click', (e) => {
-                        if (e.currentTarget.classList.contains('cursor-not-allowed')) {
-                            e.preventDefault();
-                            return;
-                        }
-                        this.state.view = e.currentTarget.dataset.view;
-                        this.render();
+                         if (link.classList.contains('cursor-not-allowed')) {
+                             e.preventDefault();
+                             return;
+                         }
+                        // The href will change the hash, which triggers the hashchange event
                     });
                 });
-
-                if (this.dom.mobileMenuBtn) {
-                    this.dom.mobileMenuBtn.addEventListener('click', () => this.toggleMobileMenu());
-                }
             },
 
             checkAuth() {
@@ -188,21 +307,18 @@
                     this.dom.authOverlay.style.display = 'none';
                     this.dom.appContainer.style.display = 'block';
                     this.handleRouteChange();
-                    this.api.fetchOrders();
-                    this.loadMenuItems();
+                    if (!this.state.orders.length) {
+                        this.api.fetchOrders();
+                    }
                 }
             },
 
             handleLogin() {
                 if (this.dom.passwordInput.value === ADMIN_PASSWORD) {
                     sessionStorage.setItem('hk_admin_auth', 'true');
-                    this.dom.authOverlay.style.display = 'none';
-                    this.dom.appContainer.classList.remove('hidden');
-                    this.handleRouteChange();
-                    this.api.fetchOrders();
-                    this.loadMenuItems();
+                    this.checkAuth();
                 } else {
-                    this.dom.authError.classList.remove('hidden');
+                    this.dom.authError.style.display = 'block';
                     this.dom.passwordInput.focus();
                 }
             },
@@ -225,17 +341,8 @@
             formatDate(dateString) {
                 if (!dateString) return 'N/A';
                 try {
-                    return new Date(dateString).toLocaleString('en-US', { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric', 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        hour12: true 
-                    });
-                } catch (e) { 
-                    return dateString; 
-                }
+                    return new Date(dateString).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+                } catch (e) { return dateString; }
             },
 
             render() {
@@ -259,31 +366,21 @@
 
             renderDashboardView() {
                 if (!this.state.orders.length) {
-                    this.dom.viewContent.innerHTML = `
-                        <div class="text-center p-10">
-                            <i class="fas fa-spinner fa-spin text-3xl text-colore-cinque mb-4"></i>
-                            <p class="text-colore-tre">Loading orders...</p>
-                        </div>`;
+                    this.dom.viewContent.innerHTML = `<div class="text-center p-10"><i class="fas fa-spinner fa-spin text-3xl"></i></div>`;
                     return;
                 }
-
                 const totalRevenue = this.state.orders.reduce((sum, order) => sum + (Number(order['Total Amount']) || 0), 0);
                 const pendingOrders = this.state.orders.filter(o => (o.Status || 'Pending').toLowerCase() === 'pending').length;
                 const recentOrders = this.state.orders.slice(0, 5);
 
-                const recentOrdersHtml = recentOrders.map(order => {
-                    const status = (order.Status || 'Pending').toLowerCase();
-                    return `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="p-3 font-medium">${order['Order ID'] || 'N/A'}</td>
-                            <td class="p-3">${order['Customer Name'] || 'Unknown'}</td>
-                            <td class="p-3 font-semibold text-right">$${(Number(order['Total Amount']) || 0).toFixed(2)}</td>
-                            <td class="p-3 text-right">
-                                <span class="status-badge status-${status}">${order.Status || 'Pending'}</span>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+                const recentOrdersHtml = recentOrders.map(order => `
+                    <tr class="border-b">
+                        <td class="p-3 font-medium">${order['Order ID']}</td>
+                        <td class="p-3">${order['Customer Name']}</td>
+                        <td class="p-3 font-semibold text-right">$${Number(order['Total Amount']).toFixed(2)}</td>
+                        <td class="p-3 text-right"><span class="status-badge status-${(order.Status || 'Pending').toLowerCase()}">${order.Status || 'Pending'}</span></td>
+                    </tr>
+                `).join('');
 
                 this.dom.viewContent.innerHTML = `
                     <h2 class="text-3xl font-bodoni mb-6">Dashboard</h2>
@@ -317,39 +414,62 @@
                     </div>
                 `;
             },
+
+            renderMenuView() {
+                const menuHtml = menuData.map(category => `
+                    <div class="mb-12">
+                        <h3 class="text-2xl font-bodoni mb-6 border-b-2 border-colore-cinque pb-2">${category.title}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            ${category.items.map(item => `
+                                <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col transition-transform hover:-translate-y-1">
+                                    <img src="${item.image}" alt="${item.name}" class="w-full h-48 object-cover">
+                                    <div class="p-4 flex flex-col flex-grow">
+                                        <h4 class="font-bold text-lg">${item.name}</h4>
+                                        <p class="text-sm text-colore-tre my-2 flex-grow">${item.description || ''}</p>
+                                        <div class="flex justify-between items-center mt-auto pt-2">
+                                            <span class="font-semibold text-colore-cinque">${item.price}</span>
+                                            <div>
+                                                 <button class="text-gray-400 hover:text-blue-600 px-2 cursor-not-allowed" title="Edit (coming soon)" disabled><i class="fas fa-pencil-alt"></i></button>
+                                                 <button class="text-gray-400 hover:text-red-600 px-2 cursor-not-allowed" title="Delete (coming soon)" disabled><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+                this.dom.viewContent.innerHTML = `
+                    <h2 class="text-3xl font-bodoni mb-6">Menu Management</h2>
+                    ${menuHtml}
+                `;
+            },
             
             renderOrdersView() {
-                const ordersToDisplay = this.state.filteredOrders.length > 0 ? this.state.filteredOrders : this.state.orders;
-                
-                const ordersHtml = ordersToDisplay.map(order => {
+                const ordersHtml = (this.state.filteredOrders || this.state.orders).map(order => {
                     const status = (order.Status || 'Pending').toLowerCase();
                     const statusOptions = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
                         .map(s => `<option value="${s}" ${s.toLowerCase() === status ? 'selected' : ''}>${s}</option>`).join('');
 
-                    const orderItems = (order['Order Items'] || '')
-                        .split(';')
-                        .filter(item => item.trim())
-                        .map(item => `<div class="text-xs text-gray-600 mb-1">${item.trim()}</div>`)
-                        .join('');
-
                     return `
                         <tr class="border-b hover:bg-gray-50">
-                            <td class="p-4 font-medium">${order['Order ID'] || 'N/A'}</td>
+                            <td class="p-4 font-medium">${order['Order ID']}</td>
                             <td class="p-4">
-                                <div class="font-semibold">${order['Customer Name'] || 'Unknown'}</div>
-                                <div class="text-xs text-gray-500">${order['Email'] || 'No email'}</div>
-                                <div class="text-xs text-gray-500">${order['Phone'] || 'No phone'}</div>
+                                <div class="font-semibold">${order['Customer Name']}</div>
+                                <div class="text-xs text-gray-500">${order['Email']}</div>
+                                <div class="text-xs text-gray-500">${order['Phone']}</div>
                             </td>
                             <td class="p-4">${this.formatDate(order['Pickup Time'])}</td>
-                            <td class="p-4 max-w-xs">${orderItems || 'No items'}</td>
-                            <td class="p-4 font-bold text-right">$${(Number(order['Total Amount']) || 0).toFixed(2)}</td>
+                            <td class="p-4 text-xs">${(order['Order Items'] || '').split('; ').join('<br>')}</td>
+                            <td class="p-4 font-bold text-right">$${Number(order['Total Amount']).toFixed(2)}</td>
                             <td class="p-4">
                                 <select class="status-select status-select-${status}" data-order-id="${order['Order ID']}">
                                     ${statusOptions}
                                 </select>
                             </td>
                         </tr>
-                    `;
+                    `
                 }).join('');
 
                 this.dom.viewContent.innerHTML = `
@@ -358,7 +478,7 @@
                         <input type="text" id="search-orders" class="p-2 border border-gray-300 rounded-lg w-full sm:w-64" placeholder="Search by name or ID...">
                     </div>
                     <div class="bg-white rounded-xl shadow-md overflow-x-auto">
-                        <table class="w-full text-sm">
+                        <table class="w-full text-sm whitespace-nowrap">
                             <thead class="bg-gray-100">
                                 <tr>
                                     <th class="p-4 text-left font-semibold">Order ID</th>
@@ -369,23 +489,12 @@
                                     <th class="p-4 text-left font-semibold">Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${!ordersToDisplay.length ? 
-                                    `<tr><td colspan="6" class="p-8 text-center text-gray-500">No orders found.</td></tr>` : 
-                                    ordersHtml
-                                }
-                            </tbody>
+                            <tbody>${!this.state.orders.length ? `<tr><td colspan="6" class="p-8 text-center text-gray-500">No orders found.</td></tr>` : ordersHtml}</tbody>
                         </table>
                     </div>
                 `;
                 
-                // Add search functionality
-                const searchInput = document.getElementById('search-orders');
-                if (searchInput) {
-                    searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
-                }
-                
-                // Add status change listeners
+                document.getElementById('search-orders').addEventListener('input', (e) => this.handleSearch(e.target.value));
                 this.dom.viewContent.querySelectorAll('.status-select').forEach(sel => {
                     sel.addEventListener('change', (e) => {
                         const newStatus = e.target.value;
@@ -396,450 +505,13 @@
                 });
             },
 
-            renderMenuView() {
-                const menuCategories = this.groupMenuItemsByCategory();
-                
-                const menuHtml = Object.keys(menuCategories).map(category => {
-                    const itemsHtml = menuCategories[category].map(item => `
-                        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                            <div class="flex flex-col md:flex-row gap-4">
-                                <div class="md:w-1/3">
-                                    <img src="${item.image}" alt="${item.name}" class="w-full h-48 object-cover rounded-lg">
-                                </div>
-                                <div class="md:w-2/3">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h3 class="text-xl font-bodoni font-semibold">${item.name}</h3>
-                                        <span class="text-lg font-bold text-colore-cinque">$${item.price}</span>
-                                    </div>
-                                    <p class="text-gray-600 mb-4">${item.description}</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${item.category ? `<span class="bg-colore-uno text-colore-tre px-3 py-1 rounded-full text-sm">${item.category}</span>` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                    
-                    return `
-                        <div class="mb-8">
-                            <h2 class="text-2xl font-bodoni mb-4 text-colore-quattro border-b pb-2">${category}</h2>
-                            <div class="grid grid-cols-1 gap-6">
-                                ${itemsHtml}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                this.dom.viewContent.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-3xl font-bodoni">Menu Management</h2>
-                        <button class="bg-colore-cinque text-white px-4 py-2 rounded-lg hover:bg-colore-nove transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Add Item
-                        </button>
-                    </div>
-                    ${menuHtml}
-                `;
-            },
-
-            groupMenuItemsByCategory() {
-                const categories = {};
-                this.state.menuItems.forEach(item => {
-                    if (!categories[item.category]) {
-                        categories[item.category] = [];
-                    }
-                    categories[item.category].push(item);
-                });
-                return categories;
-            },
-
             handleSearch(query) {
                 const lowerQuery = query.toLowerCase();
                 this.state.filteredOrders = this.state.orders.filter(order => {
-                    return (order['Customer Name']?.toLowerCase().includes(lowerQuery) ||
-                           (order['Order ID']?.toLowerCase().includes(lowerQuery)));
+                    return order['Customer Name']?.toLowerCase().includes(lowerQuery) ||
+                           order['Order ID']?.toLowerCase().includes(lowerQuery);
                 });
                 this.renderOrdersView();
-            },
-
-            loadMenuItems() {
-                // Sample menu data with proper image URLs
-                this.state.menuItems = [
-                    // Bread & Soups
-                    {
-                        name: "HOME MADE BREAD",
-                        price: "4.95",
-                        description: "Focaccia with balsamic reduction & extra virgin olive oil, whipped butter",
-                        category: "BREAD & SOUPS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bread-1920w.jpg"
-                    },
-                    {
-                        name: "GARLIC BREAD",
-                        price: "4.95",
-                        description: "Sliced home made crusty french bread toasted with garlic butter",
-                        category: "BREAD & SOUPS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/garlic-1920w.jpg"
-                    },
-                    {
-                        name: "PORK RILLETTES AND BREAD",
-                        price: "6.95",
-                        description: "A rustic French pork pâté spread (brown pork jam) with homemade bread",
-                        category: "BREAD & SOUPS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork+pate+bread-1920w.jpg"
-                    },
-                    {
-                        name: "TOMATO CHEESE BREAD",
-                        price: "8.95",
-                        description: "Tomato marinaram sauce, mazzarella & parmesan cheese melted on focaccia bread",
-                        category: "BREAD & SOUPS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tomato+bread-1920w.jpg"
-                    },
-                    {
-                        name: "FRENCH ONION SOUP",
-                        price: "18.00",
-                        description: "Classic French onion soup with cheese crust",
-                        category: "BREAD & SOUPS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/onion-soup-ff70c88d-1920w.jpg"
-                    },
-                    {
-                        name: "SEAFOOD CHOWDER",
-                        price: "18.00",
-                        description: "Rich and creamy seafood chowder",
-                        category: "BREAD & SOUPS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chowder-a2521c66-1920w.jpg"
-                    },
-                    {
-                        name: "LOBSTER BISQUE",
-                        price: "24.00",
-                        description: "With lobster arancini",
-                        category: "BREAD & SOUPS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lobster-bisq-1920w.jpg"
-                    },
-
-                    // Appetizer & Salad
-                    {
-                        name: "HOUSE SALAD",
-                        price: "14.95-16.95",
-                        description: "Spring mix and crisp romaine lettuce tossed with our house dressing and balsamic reduction",
-                        category: "APPETIZER & SALAD",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/hou.salad-1920w.jpg"
-                    },
-                    {
-                        name: "CAESAR SALAD",
-                        price: "14.95-16.95",
-                        description: "Crisp romaine lettuce with homemade Caesar dressing, parmesan cheese and homemade garlic crouton",
-                        category: "APPETIZER & SALAD",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ceaser-1920w.jpg"
-                    },
-                    {
-                        name: "SALMON GRAVLAX",
-                        price: "18.00",
-                        description: "With orange fennel salad",
-                        category: "APPETIZER & SALAD",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/samoln+G-1920w.jpg"
-                    },
-                    {
-                        name: "MUSHROOM FRICASSEE",
-                        price: "18.00",
-                        description: "Sautéed assorted mushrooms on baby spinach salad with balsamic reduction & walnuts",
-                        category: "APPETIZER & SALAD",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/mushroom-Fri-1920w.jpg"
-                    },
-                    {
-                        name: "BAKED GOAT CHEESE SALAD",
-                        price: "18.00",
-                        description: "With pistachio crust on spinach, pear & mixed berry salad",
-                        category: "APPETIZER & SALAD",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/GOAT-CHEESE-d558f8b1-afba1750-1920w.jpg"
-                    },
-                    {
-                        name: "BEEF CARPACCIO",
-                        price: "28.00",
-                        description: "Dressed with Dijon mustard, lemon, capers, parmigigiano, truffle oil",
-                        category: "APPETIZER & SALAD",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/beef-carpio-1920w.jpg"
-                    },
-
-                    // Hot Appetizers
-                    {
-                        name: "ESCARGOTS A LA PARISIENNE",
-                        price: "18.00",
-                        description: "Baked snails in a cognac, garlic, & herb butter",
-                        category: "HOT APPETIZERS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ecsago-a9f326c4-1920w.jpg"
-                    },
-                    {
-                        name: "SIGNATURE CRAB CAKE",
-                        price: "18.00",
-                        description: "Served on avocado, tomato salsa, mango coulis & wasabi aioli",
-                        category: "HOT APPETIZERS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/carb+cake-1920w.jpg"
-                    },
-                    {
-                        name: "FROG LEGS FEUILLETTES",
-                        price: "28.00",
-                        description: "Sautéed with mushroom & Riesling cream sauce served in a flaky puff pastry",
-                        category: "HOT APPETIZERS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/frog+legs-1920w.jpg"
-                    },
-                    {
-                        name: "ROASTED QUAIL & FOIE GRAS",
-                        price: "28.00",
-                        description: "Roasted quail stuffed with wild rice, mushroom & foie gras, wrapped in prosciutto",
-                        category: "HOT APPETIZERS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/quail+app-1920w.jpg"
-                    },
-                    {
-                        name: "CRISP PRAWNS WRAPPED IN ANGEL HAIR",
-                        price: "18.00",
-                        description: "Served on carrot raisin salad with mango salsa",
-                        category: "HOT APPETIZERS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/crisp-prawns-c7f0c313-1920w.jpg"
-                    },
-
-                    // The Classic Art of Pasta
-                    {
-                        name: "PENNE POMODORO",
-                        price: "30.00",
-                        description: "With Italian plum tomatoes and fresh basil",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tom-1920w.jpg"
-                    },
-                    {
-                        name: "PENNE ALFREDO",
-                        price: "30.00",
-                        description: "Tossed in a rich parmigiano cheese cream sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cream-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE CARBONARA",
-                        price: "32.00",
-                        description: "With pancetta, parmesan cheese, and custard cream sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/caro-pasta-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE POLLO PESTO",
-                        price: "32.00",
-                        description: "With chicken tossed in fresh basil pesto cream sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pesto-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE SALMON AFFUMICATO",
-                        price: "35.00",
-                        description: "With smoked salmon and sun-dried tomatoes in a light cream sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/salmon-pasta-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE AGLIO OLIO",
-                        price: "30.00",
-                        description: "With garlic, chili, white wine, butter, basil, parsley, and extra virgin olive oil",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/aliolo-6d7b7ab1-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE AMATRICIANA",
-                        price: "32.00",
-                        description: "With pancetta, garlic, shallot, chili, spicy tomatoes sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/AM-8032bb9b-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE SALSICCIA",
-                        price: "32.00",
-                        description: "With sautéed Italian sausage in spicy tomato sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sausage-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE PESCATORA",
-                        price: "35.00",
-                        description: "With mussels, prawns, scallops, clams, and calamari in spicy tomato sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/seafood+pasta-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE VONGOLE",
-                        price: "35.00",
-                        description: "With clam in garlic, chili, white wine & extra virgin olive oil",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/clam-1920w.jpg"
-                    },
-                    {
-                        name: "LINGUINE GAMBERONI",
-                        price: "35.00",
-                        description: "With sautéed prawns in tomato Rosé sauce",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ling+PARWNS-1920w.jpg"
-                    },
-                    {
-                        name: "RISOTTO FUNGHI",
-                        price: "35.00",
-                        description: "With a medley of portobellini, shiitake & shimeji mushroom, aromatics with truffle oil",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/RISOTO-funghi-1920w.jpg"
-                    },
-                    {
-                        name: "RISOTTO DUCK",
-                        price: "38.00",
-                        description: "Smoked Duck Breast with artichokes, sun dried tomatoes, peas and parmigiano cheese",
-                        category: "THE CLASSIC ART OF PASTA",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/risoto-duck-1920w.jpg"
-                    },
-
-                    // Chef's Recommended
-                    {
-                        name: "BOUILLABAISSE MARSEILLAISE",
-                        price: "68.00",
-                        description: "A medley of fish & shell fish cooked in aromatic fish soup served with rouille sauce & garlic crouton",
-                        category: "CHEF'S RECOMMENDED",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bouiabsa-6c0226f0-1920w.jpg"
-                    },
-                    {
-                        name: "PANSERED RED SNAPPER",
-                        price: "38.00",
-                        description: "Mushroom vermouth sauce",
-                        category: "CHEF'S RECOMMENDED",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/snapper-1920w.jpg"
-                    },
-                    {
-                        name: "BAKED BLACK SABLE FISH",
-                        price: "48.00",
-                        description: "With Olive Tapenade, Tomato confit, capers and lemon infused olive oil",
-                        category: "CHEF'S RECOMMENDED",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/sable-1920w.jpg"
-                    },
-
-                    // Henry's Specialties
-                    {
-                        name: "BEEF BOURGUIGNON",
-                        price: "38.00",
-                        description: "Braised beef shank in a tasty rich burgundy wine with mushrooms & onions",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/beef+stew-1920w.jpg"
-                    },
-                    {
-                        name: "DUCK BREAST",
-                        price: "42.00",
-                        description: "Roasted to your preference in a Grand Marnier orange sauce",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/duck+brest-1920w.jpg"
-                    },
-                    {
-                        name: "BEEF WELLINGTON",
-                        price: "65.00",
-                        description: "Tenderloin of beef wrapped with prosciutto, foie gras purée, mushroom & truffle duxelle",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/wellington-1920w.jpg"
-                    },
-                    {
-                        name: "RACK OF LAMB",
-                        price: "65.00",
-                        description: "With a Provençale herbs crust and rosemary jus",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lamb-1920w.jpg"
-                    },
-                    {
-                        name: "PORK MEDALLION",
-                        price: "38.00",
-                        description: "With caramelized apple & blue cheese",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork+cut-1920w.jpg"
-                    },
-                    {
-                        name: "ROAST CHICKEN",
-                        price: "38.00",
-                        description: "Succulent boneless free range chicken marinated in lemon garlic & rosemary",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/roast+chix-585accf2-1920w.jpg"
-                    },
-                    {
-                        name: "ROASTED RABBIT SADDLE ROULADE",
-                        price: "45.00",
-                        description: "Wrapped with proscuitto and wild morel mushroom",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/rabbit-1920w.jpg"
-                    },
-                    {
-                        name: "PORK KNUCKLE",
-                        price: "38.00",
-                        description: "Roasted cracking pork hock with sauerkraut",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/pork-Kn-1920w.jpg"
-                    },
-                    {
-                        name: "VEAL T-BONE",
-                        price: "48.00",
-                        description: "Grilled Veal T-Bone rubbed with garlic, lemon juice rosemary & ex virgin olive oil",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/T+bone-2f1e27c1-1920w.jpg"
-                    },
-                    {
-                        name: "CASSOULET TOULOUSE",
-                        price: "38.00",
-                        description: "A hearty French bean stew, baked with duck confit, sausage, and pork",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/casslout+2-1920w.jpg"
-                    },
-                    {
-                        name: "DUCK CONFIT PERIGOURDINE",
-                        price: "38.00",
-                        description: "Traditional slow cooked duck leg with sautéed mushroom, foie gars mousse madeira wine & truffle jus",
-                        category: "HENRY'S SPECIALTIES",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/DUCK+CONFIT-d1436af0-1920w.jpg"
-                    },
-
-                    // Homemade Desserts
-                    {
-                        name: "SIGNATURE CHEESE CAKE",
-                        price: "15.00",
-                        description: "With brandied blueberries",
-                        category: "HOMEMADE DESSERTS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cheese+cake-1920w.jpg"
-                    },
-                    {
-                        name: "CHOCOLATE GANACHE",
-                        price: "15.00",
-                        description: "Kahlua and chocolate mousse glazed with shiny ganache",
-                        category: "HOMEMADE DESSERTS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/chcoc-cake-1920w.jpg"
-                    },
-                    {
-                        name: "CRÈME BRULÉE",
-                        price: "15.00",
-                        description: "Crisp caramelized vanilla cream custard with berries (Not available for take-out)",
-                        category: "HOMEMADE DESSERTS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/crebe-4c7616e9-1920w.jpg"
-                    },
-                    {
-                        name: "LEMON TART",
-                        price: "15.00",
-                        description: "With meringue and berries",
-                        category: "HOMEMADE DESSERTS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lomon+t-1920w.jpg"
-                    },
-                    {
-                        name: "FRUITS SHERBET",
-                        price: "15.00",
-                        description: "Refreshing fruit sherbet",
-                        category: "HOMEMADE DESSERTS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/SHERBET-6ccd5d65-1920w.jpg"
-                    },
-                    {
-                        name: "NOUGAT GLACEE",
-                        price: "15.00",
-                        description: "Nougat ice cream with almond, pistachios",
-                        category: "HOMEMADE DESSERTS",
-                        image: "https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ice+cream+2-1920w.jpg"
-                    }
-                ];
-            },
-
-            toggleMobileMenu() {
-                const sidebar = document.querySelector('aside');
-                sidebar.classList.toggle('hidden');
             },
 
             api: {
@@ -849,15 +521,11 @@
                         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const result = await response.json();
                         if (result.status === 'error') throw new Error(result.message);
-                        app.state.orders = result.data || [];
-                        app.state.filteredOrders = result.data || [];
+                        app.state.orders = result.data;
+                        app.state.filteredOrders = result.data;
                         app.render();
                     } catch (e) {
-                        console.error('Error fetching orders:', e);
                         app.showToast(`Error fetching orders: ${e.message}`, 'error');
-                        app.state.orders = [];
-                        app.state.filteredOrders = [];
-                        app.render();
                     }
                 },
 
@@ -879,9 +547,8 @@
                         
                         app.showToast(`Order ${orderId} updated to ${newStatus}`, 'success');
                     } catch (e) {
-                        console.error('Error updating order:', e);
                         app.showToast(`Failed to update order: ${e.message}`, 'error');
-                        // Re-fetch to revert optimistic update on failure
+                        // Optional: re-fetch to revert optimistic update on failure
                         this.fetchOrders();
                     }
                 }
