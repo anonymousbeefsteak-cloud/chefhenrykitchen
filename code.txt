@@ -1,310 +1,402 @@
 // Code.gs - Henry's Kitchen Pasta & Grill Management System
-// This script is designed to be deployed as a Web App to handle pre-orders from the restaurant website.
-// Sheet ID: 1Ml9basoN1YXHgrtu8FvfXBNvy_-Harklyvo_De9XHL0
+// This script provides a complete backend for the restaurant website and admin panel.
+// It manages orders, the menu, analytics, and settings.
+// Sheet ID: 1OhJNJTIdwt5c0UVaRXHTCkBfsuG9hoIeMaRSDzMU2d4
 
-// Global constants
+// --- GLOBAL CONFIGURATION ---
+const SPREADSHEET_ID = '1OhJNJTIdwt5c0UVaRXHTCkBfsuG9hoIeMaRSDzMU2d4';
+
 const SHEET_NAMES = {
   ORDERS: 'Orders',
-  BOOKINGS: 'Bookings',
   MENU: 'Menu',
-  CUSTOMERS: 'Customers',
   SETTINGS: 'Settings'
 };
-const SPREADSHEET_ID = '1Ml9basoN1YXHgrtu8FvfXBNvy_-Harklyvo_De9XHL0';
-const ORDERS_HEADERS = [
-  'Order ID', 'Customer Name', 'Phone', 'Email', 'Order Date', 
-  'Pickup Time', 'Order Items', 'Total Amount', 'Status'
-];
 
+const HEADERS = {
+  ORDERS: ['Order ID', 'Customer Name', 'Phone', 'Email', 'Order Date', 'Pickup Time', 'Order Items', 'Total Amount', 'Status'],
+  MENU: ['ID', 'Name', 'Description', 'Price String', 'Price Value', 'Image URL', 'Category', 'Status'],
+  SETTINGS: ['Setting', 'Value']
+};
 
-// Get the specific spreadsheet by ID
-function getHenryKitchenSpreadsheet() {
-  return SpreadsheetApp.openById(SPREADSHEET_ID);
+// --- UTILITY FUNCTIONS ---
+const getSpreadsheet = () => SpreadsheetApp.openById(SPREADSHEET_ID);
+const getSheet = (name) => getSpreadsheet().getSheetByName(name);
+
+function getSheetAsJSON(sheet) {
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+  const headers = data.shift();
+
+  // Standardize headers to camelCase for robust key access in JavaScript
+  const keys = headers.map(header => 
+    header.toString().trim()
+      .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special characters
+      .replace(/\s(.)/g, ($1) => $1.toUpperCase()) // Uppercase char after space
+      .replace(/\s/g, '') // Remove spaces
+      .replace(/^(.)/, ($1) => $1.toLowerCase()) // Lowercase first char
+  );
+  
+  return data.map(row => {
+    const obj = {};
+    keys.forEach((key, i) => {
+      if (key) { // Only add if the key is valid
+        obj[key] = row[i];
+      }
+    });
+    return obj;
+  });
 }
 
-// A robust function to check and fix headers if they don't match the expected format.
-function verifySheetHeaders(sheet, expectedHeaders) {
-  try {
-    const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    let headersMatch = currentHeaders.length >= expectedHeaders.length;
-    if (headersMatch) {
-      for (let i = 0; i < expectedHeaders.length; i++) {
-        if (currentHeaders[i] !== expectedHeaders[i]) {
-          headersMatch = false;
-          break;
-        }
-      }
-    }
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
 
-    if (!headersMatch) {
-      sheet.getRange('1:1').clear(); // Clear existing headers
-      sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders])
-        .setFontWeight('bold').setBackground('#4A2C2A').setFontColor('white');
-      Logger.log('Sheet headers for ' + sheet.getName() + ' were corrected.');
+// --- WEB APP ENTRY POINTS (GET & POST) ---
+
+function doGet(e) {
+  try {
+    const action = e.parameter.action;
+    switch (action) {
+      case 'getOrders':
+        return jsonResponse({ status: 'success', data: getOrders() });
+      case 'getMenu':
+        return jsonResponse({ status: 'success', data: getMenu() });
+      case 'getAnalytics':
+        return jsonResponse({ status: 'success', data: getAnalytics() });
+      case 'getSettings':
+        return jsonResponse({ status: 'success', data: getSettings() });
+      default:
+        return jsonResponse({ status: 'success', message: 'Henry\'s Kitchen API is running.' });
     }
-  } catch (e) {
-    // This can happen if the sheet is completely empty.
-    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders])
-      .setFontWeight('bold').setBackground('#4A2C2A').setFontColor('white');
-    Logger.log('Sheet headers for ' + sheet.getName() + ' were initialized.');
+  } catch (error) {
+    Logger.log(`doGet Error: ${error.toString()}`);
+    return jsonResponse({ status: 'error', message: error.toString() });
   }
 }
 
-// Handle POST requests from the website pre-order form
 function doPost(e) {
   try {
-    const { action } = e.parameter;
+    const params = e.parameter;
+    const action = params.action;
 
-    if (action === 'updateStatus') {
-      const { orderId, status } = e.parameter;
-      if (!orderId || !status) {
-        throw new Error("Missing orderId or status for update action.");
-      }
-      const result = updateOrderStatus(orderId, status);
-      return ContentService
-        .createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+    switch (action) {
+      case 'createOrder':
+        return jsonResponse(createOrder(params));
+      case 'updateStatus':
+        return jsonResponse(updateOrderStatus(params.orderId, params.status));
+      case 'addMenuItem':
+        return jsonResponse(addMenuItem(JSON.parse(params.itemData)));
+      case 'updateMenuItem':
+        return jsonResponse(updateMenuItem(params.itemId, JSON.parse(params.itemData)));
+      case 'updateMenuStatus':
+        return jsonResponse(updateMenuStatus(params.itemId, params.status));
+      case 'deleteMenuItem':
+        return jsonResponse(deleteMenuItem(params.itemId));
+      case 'updateSettings':
+        return jsonResponse(updateSettings(JSON.parse(params.settingsData)));
+      default:
+        // Fallback for original order form POST
+        return jsonResponse(createOrder(params));
     }
-
-    // Default: create order, for backward compatibility with website form
-    const { customerName, customerEmail, customerPhone, pickupTime, orderDetails, subtotal, serviceFee, total } = e.parameter;
-
-    if (!customerName || !customerEmail || !customerPhone || !pickupTime || !orderDetails || !total || !subtotal || !serviceFee) {
-      throw new Error("Missing required form data for order creation.");
-    }
-    
-    const orderData = {
-      name: customerName,
-      email: customerEmail,
-      phone: customerPhone,
-      pickupTime: pickupTime,
-      items: JSON.parse(orderDetails),
-      subtotal: parseFloat(subtotal),
-      serviceFee: parseFloat(serviceFee),
-      total: parseFloat(total)
-    };
-
-    const result = createOrder(orderData);
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
-      
   } catch (error) {
-    Logger.log('doPost Error: ' + error.message + ' Stack: ' + error.stack);
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    Logger.log(`doPost Error: ${error.toString()}\nPayload: ${e.postData ? e.postData.contents : 'N/A'}`);
+    return jsonResponse({ status: 'error', message: error.toString() });
   }
 }
 
-// New function to update the status of an order
-function updateOrderStatus(orderId, newStatus) {
-  try {
-    const ss = getHenryKitchenSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAMES.ORDERS);
-    
-    verifySheetHeaders(sheet, ORDERS_HEADERS);
-    
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const orderIdColIndex = headers.indexOf('Order ID');
-    const statusColIndex = headers.indexOf('Status');
-    
-    if (orderIdColIndex === -1 || statusColIndex === -1) {
-      throw new Error("Could not find 'Order ID' or 'Status' column in the sheet.");
-    }
-    
-    // Start from 1 to skip header row
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][orderIdColIndex] === orderId) {
-        // Found the row. Column index is 0-based, sheet range is 1-based.
-        sheet.getRange(i + 1, statusColIndex + 1).setValue(newStatus);
-        return { status: 'success', message: `Order ${orderId} status updated to ${newStatus}` };
+// --- DATA FETCHING FUNCTIONS (GET) ---
+
+function getOrders() {
+  const sheet = getSheet(SHEET_NAMES.ORDERS);
+  return getSheetAsJSON(sheet).reverse();
+}
+
+function getMenu() {
+  const sheet = getSheet(SHEET_NAMES.MENU);
+  const menuData = getSheetAsJSON(sheet);
+  // Ensure priceValue is a number
+  return menuData.map(item => ({...item, priceValue: Number(item.priceValue) || 0}));
+}
+
+function getSettings() {
+  const sheet = getSheet(SHEET_NAMES.SETTINGS);
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return {};
+  const settings = {};
+  data.slice(1).forEach(row => {
+    settings[row[0]] = row[1];
+  });
+  return settings;
+}
+
+function getAnalytics() {
+  const orders = getOrders();
+  const menu = getMenu();
+  const now = new Date();
+
+  // 1. Key Metrics
+  const totalRevenue = orders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+  const totalOrders = orders.length;
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+  // 2. Sales Over Time (Last 30 days)
+  const salesByDay = {};
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const day = d.toISOString().split('T')[0];
+    salesByDay[day] = 0;
+  }
+  orders.forEach(order => {
+    const orderDate = new Date(order.orderDate);
+    if ((now - orderDate) / (1000 * 60 * 60 * 24) < 30) {
+      const day = orderDate.toISOString().split('T')[0];
+      if (salesByDay[day] !== undefined) {
+        salesByDay[day] += Number(order.totalAmount) || 0;
       }
-    }
-    
-    return { status: 'error', message: `Order with ID ${orderId} not found.` };
-    
-  } catch (error) {
-    Logger.log('Error updating order status: ' + error.toString());
-    return { status: 'error', message: 'Failed to update order status: ' + error.toString() };
-  }
-}
-
-
-// Create a new order entry in the spreadsheet
-function createOrder(orderData) {
-  try {
-    const ss = getHenryKitchenSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAMES.ORDERS);
-    
-    // ** SELF-HEALING STEP **: Verify headers before writing data
-    verifySheetHeaders(sheet, ORDERS_HEADERS);
-
-    const orderId = 'ORD-' + Utilities.getUuid().substring(0, 8).toUpperCase();
-    
-    // Format the order items into a human-readable string with prices
-    const itemsReadableString = orderData.items.map(item => 
-      `${item.quantity} x ${item.name} - $${(item.priceValue * item.quantity).toFixed(2)}`
-    ).join('; ');
-
-    const newRow = [
-      orderId,
-      orderData.name,
-      orderData.phone,
-      orderData.email,
-      new Date(),
-      orderData.pickupTime,
-      itemsReadableString, // Use the new readable string
-      orderData.total,
-      'Pending'
-    ];
-    
-    sheet.appendRow(newRow);
-    
-    sendOrderConfirmation(orderData, orderId);
-    
-    return {
-      status: 'success',
-      message: 'Order created successfully',
-      orderId: orderId
-    };
-  } catch (error) {
-    Logger.log('Error creating order: ' + error.toString());
-    return { status: 'error', message: 'Failed to create order: ' + error.toString() };
-  }
-}
-
-// Send order confirmation email to the customer
-function sendOrderConfirmation(orderData, orderId) {
-  try {
-    const subject = `Henry's Kitchen - Pre-order Confirmation #${orderId}`;
-    const { total, subtotal, serviceFee } = orderData;
-
-    let itemsHtml = orderData.items.map(item => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.name}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${item.priceValue.toFixed(2)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.priceValue * item.quantity).toFixed(2)}</td>
-      </tr>
-    `).join('');
-    
-    const htmlBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #8B4513;">Henry's Kitchen Pasta & Grill</h2>
-        <h3>Pre-order Confirmation</h3>
-        <p>Dear ${orderData.name},</p>
-        <p>Thank you for your pre-order. We will contact you shortly to confirm all details. Here is a summary of your request:</p>
-        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
-          <p><strong>Order ID:</strong> ${orderId}</p>
-          <p><strong>Order Placed:</strong> ${new Date().toLocaleString()}</p>
-          <p><strong>Requested Pickup Time:</strong> ${new Date(orderData.pickupTime).toLocaleString()}</p>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-          <thead>
-            <tr style="background: #4A2C2A; color: white;">
-              <th style="padding: 10px; text-align: left;">Item</th>
-              <th style="padding: 10px; text-align: center;">Qty</th>
-              <th style="padding: 10px; text-align: right;">Price</th>
-              <th style="padding: 10px; text-align: right;">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-            <tr><td colspan="4" style="padding-top: 10px;"></td></tr>
-            <tr>
-              <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Subtotal:</td>
-              <td style="padding: 8px; text-align: right; font-weight: bold;">$${subtotal.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Service Fee (20%):</td>
-              <td style="padding: 8px; text-align: right; font-weight: bold;">$${serviceFee.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold; font-size: 1.1em; border-top: 2px solid #333;">Total:</td>
-              <td style="padding: 8px; text-align: right; font-weight: bold; font-size: 1.1em; border-top: 2px solid #333;">$${total.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p><strong>Please Note:</strong> This is a pre-order request, not a final confirmation. We will be in touch to confirm your pickup time and payment.</p>
-        <p>Best regards,<br>Henry's Kitchen Team</p>
-      </div>
-    `;
-    
-    MailApp.sendEmail({ to: orderData.email, subject: subject, htmlBody: htmlBody });
-    Logger.log(`Order confirmation sent to ${orderData.email}`);
-  } catch (error) {
-    Logger.log('Error sending order confirmation: ' + error.toString());
-  }
-}
-
-// Handle GET requests
-function doGet(e) {
-  if (e.parameter.action === 'getOrders') {
-    try {
-      const ss = getHenryKitchenSpreadsheet();
-      const sheet = ss.getSheetByName(SHEET_NAMES.ORDERS);
-      const data = sheet.getDataRange().getValues();
-      
-      let orders = [];
-      if (data.length > 1) {
-        const headers = data.shift();
-        orders = data.map(row => {
-          let order = {};
-          headers.forEach((header, index) => {
-            const key = header.trim();
-            if (key) {
-              order[key] = row[index];
-            }
-          });
-          return order;
-        }).reverse();
-      }
-
-      const responsePayload = JSON.stringify({ status: 'success', data: orders });
-      
-      // Support JSONP for cross-domain requests from the admin panel
-      if (e.parameter.callback) {
-        return ContentService.createTextOutput(`${e.parameter.callback}(${responsePayload})`).setMimeType(ContentService.MimeType.JAVASCRIPT);
-      } else {
-        return ContentService.createTextOutput(responsePayload).setMimeType(ContentService.MimeType.JSON);
-      }
-
-    } catch (error) {
-       Logger.log('doGet getOrders Error: ' + error.message + ' Stack: ' + error.stack);
-       const errorPayload = JSON.stringify({ status: 'error', message: error.toString() });
-        if (e.parameter.callback) {
-            return ContentService.createTextOutput(`${e.parameter.callback}(${errorPayload})`).setMimeType(ContentService.MimeType.JAVASCRIPT);
-        }
-       return ContentService.createTextOutput(errorPayload).setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-  // Default GET response for testing
-  return ContentService
-    .createTextOutput(JSON.stringify({ status: 'success', message: 'Henry\'s Kitchen API is running.' }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-
-// You can run this function manually from the Apps Script editor to set up your spreadsheet for the first time.
-function initializeApp() {
-  const ss = getHenryKitchenSpreadsheet();
-  
-  Object.values(SHEET_NAMES).forEach(sheetName => {
-    let sheet = ss.getSheetByName(sheetName);
-    if (!sheet) {
-      sheet = ss.insertSheet(sheetName);
-    }
-    
-    switch(sheetName) {
-      case SHEET_NAMES.ORDERS:
-        verifySheetHeaders(sheet, ORDERS_HEADERS);
-        break;
-      // You can add header verification for other sheets here if needed.
     }
   });
+
+  // 3. Top Selling Items
+  const itemCounts = {};
+  orders.forEach(order => {
+    try {
+        const orderItems = JSON.parse(order.orderItems || '[]');
+        orderItems.forEach(item => {
+            itemCounts[item.name] = (itemCounts[item.name] || 0) + item.quantity;
+        });
+    } catch(e) {
+        // Fallback for old string format
+        const items = (order.orderItems || '').split('; ');
+        items.forEach(itemString => {
+            const match = itemString.match(/^(\d+)\s*x\s*(.+?)\s*-/);
+            if (match) {
+                const qty = parseInt(match[1], 10);
+                const name = match[2].trim();
+                itemCounts[name] = (itemCounts[name] || 0) + qty;
+            }
+        });
+    }
+  });
+
+  const topSellers = Object.entries(itemCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10)
+    .map(([name, count]) => ({ name, count }));
+
+  return {
+    keyMetrics: {
+      totalRevenue: totalRevenue.toFixed(2),
+      totalOrders,
+      avgOrderValue: avgOrderValue.toFixed(2)
+    },
+    salesReport: {
+      labels: Object.keys(salesByDay),
+      data: Object.values(salesByDay)
+    },
+    topSellers
+  };
+}
+
+// --- DATA MODIFICATION FUNCTIONS (POST) ---
+
+function createOrder(params) {
+  const { customerName, customerEmail, customerPhone, pickupTime, orderDetails, total } = params;
+  const sheet = getSheet(SHEET_NAMES.ORDERS);
+  const orderId = 'ORD-' + Utilities.getUuid().substring(0, 8).toUpperCase();
   
-  Logger.log('Henry\'s Kitchen app initialized/verified successfully');
+  sheet.appendRow([
+    orderId, customerName, customerPhone, customerEmail, new Date(),
+    pickupTime, orderDetails, total, 'Pending' // Store raw JSON string for details
+  ]);
+  return { status: 'success', message: 'Order created', orderId };
+}
+
+function updateOrderStatus(orderId, newStatus) {
+  const sheet = getSheet(SHEET_NAMES.ORDERS);
+  const data = sheet.getDataRange().getValues();
+  const idColIndex = HEADERS.ORDERS.indexOf('Order ID');
+  const statusColIndex = HEADERS.ORDERS.indexOf('Status');
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][idColIndex] === orderId) {
+      sheet.getRange(i + 1, statusColIndex + 1).setValue(newStatus);
+      return { status: 'success', message: `Order ${orderId} updated` };
+    }
+  }
+  return { status: 'error', message: 'Order not found' };
+}
+
+function addMenuItem(item) {
+  const sheet = getSheet(SHEET_NAMES.MENU);
+  const newId = 'ITEM-' + Utilities.getUuid().substring(0, 8).toUpperCase();
+  sheet.appendRow([
+    newId, item.name, item.description, item.price, item.priceValue,
+    item.image, item.category, item.status
+  ]);
+  return { status: 'success', message: 'Menu item added', newItem: {...item, id: newId} };
+}
+
+function updateMenuItem(itemId, itemData) {
+  const sheet = getSheet(SHEET_NAMES.MENU);
+  const data = sheet.getDataRange().getValues();
+  const idColIndex = HEADERS.MENU.indexOf('ID');
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][idColIndex] === itemId) {
+      // Assumes order of itemData properties matches HEADERS.MENU
+      const newRow = [
+        itemId, itemData.name, itemData.description, itemData.price,
+        itemData.priceValue, itemData.image, itemData.category, itemData.status
+      ];
+      sheet.getRange(i + 1, 1, 1, newRow.length).setValues([newRow]);
+      return { status: 'success', message: 'Menu item updated' };
+    }
+  }
+  return { status: 'error', message: 'Item not found' };
+}
+
+function updateMenuStatus(itemId, newStatus) {
+  const sheet = getSheet(SHEET_NAMES.MENU);
+  const data = sheet.getDataRange().getValues();
+  const idColIndex = HEADERS.MENU.indexOf('ID');
+  const statusColIndex = HEADERS.MENU.indexOf('Status');
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][idColIndex] === itemId) {
+      sheet.getRange(i + 1, statusColIndex + 1).setValue(newStatus);
+      return { status: 'success', message: `Item ${itemId} status updated to ${newStatus}` };
+    }
+  }
+  return { status: 'error', message: 'Item not found' };
+}
+
+function deleteMenuItem(itemId) {
+  const sheet = getSheet(SHEET_NAMES.MENU);
+  const data = sheet.getDataRange().getValues();
+  const idColIndex = HEADERS.MENU.indexOf('ID');
+
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (data[i][idColIndex] === itemId) {
+      sheet.deleteRow(i + 1);
+      return { status: 'success', message: 'Menu item deleted' };
+    }
+  }
+  return { status: 'error', message: 'Item not found' };
+}
+
+function updateSettings(settingsData) {
+  const sheet = getSheet(SHEET_NAMES.SETTINGS);
+  const data = sheet.getDataRange().getValues();
+  const settingColIndex = HEADERS.SETTINGS.indexOf('Setting');
+  const valueColIndex = HEADERS.SETTINGS.indexOf('Value');
+
+  Object.entries(settingsData).forEach(([key, value]) => {
+    let found = false;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][settingColIndex] === key) {
+        sheet.getRange(i + 1, valueColIndex + 1).setValue(value);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      sheet.appendRow([key, value]);
+    }
+  });
+  return { status: 'success', message: 'Settings updated' };
+}
+
+
+// --- INITIALIZATION ---
+
+/**
+ * Run this function ONCE from the Apps Script editor to set up your spreadsheet.
+ * 1. Open your Google Sheet.
+ * 2. Go to Extensions > Apps Script.
+ * 3. In the script editor, select 'initializeApp' from the function dropdown.
+ * 4. Click 'Run'.
+ * 5. You may be prompted to authorize the script. Please allow permissions.
+ * This will create all necessary sheets and populate them with initial data.
+ */
+function initializeApp() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) {
+      throw new Error("Spreadsheet not found. Please check SPREADSHEET_ID.");
+    }
+    Logger.log(`Initializing spreadsheet: ${ss.getName()}`);
+
+    // 1. Verify/Create Sheets and Headers
+    Object.keys(HEADERS).forEach(key => {
+      const sheetName = SHEET_NAMES[key];
+      const headers = HEADERS[key];
+      let sheet = ss.getSheetByName(sheetName);
+      if (!sheet) {
+        sheet = ss.insertSheet(sheetName);
+        Logger.log(`Created sheet: ${sheetName}`);
+      }
+      // Only set headers if the sheet is new or empty
+      if (sheet.getLastRow() < 1) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers])
+          .setFontWeight('bold').setBackground('#4A2C2A').setFontColor('white');
+        sheet.setFrozenRows(1);
+        Logger.log(`Set headers for sheet: ${sheetName}`);
+      }
+    });
+
+    // 2. Populate Initial Menu if empty
+    const menuSheet = getSheet(SHEET_NAMES.MENU);
+    if (menuSheet.getLastRow() === 1) { // Only headers exist
+      populateInitialMenu(menuSheet);
+      Logger.log('Populated initial menu data.');
+    }
+
+    // 3. Populate Initial Settings if empty
+    const settingsSheet = getSheet(SHEET_NAMES.SETTINGS);
+    if (settingsSheet.getLastRow() === 1) {
+      settingsSheet.appendRow(['Business Hours', 'Fridays, Saturdays & Sundays (dinner only)']);
+      settingsSheet.appendRow(['Service Fee', '20']); // Store as a number
+      Logger.log('Populated initial settings.');
+    }
+    
+    SpreadsheetApp.flush();
+    const message = 'Henry\'s Kitchen app initialized/verified successfully!';
+    Logger.log(message);
+    if (typeof Browser !== 'undefined') {
+      Browser.msgBox('Success', message, Browser.Buttons.OK);
+    }
+  } catch(e) {
+    const errorMessage = `Initialization failed: ${e.message} at ${e.fileName}:${e.lineNumber}`;
+    Logger.log(errorMessage);
+    if (typeof Browser !== 'undefined') {
+      Browser.msgBox('Error', errorMessage, Browser.Buttons.OK);
+    }
+  }
+}
+
+function populateInitialMenu(sheet) {
+  const initialMenu = [
+    // Breads & Soups
+    ['b1', 'HOME MADE BREAD', 'focaccia with balsamic reduction & extra virgin olive oil, whipped butter', '$4.95', 4.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bread-1920w.jpg', 'Breads & Soups', 'Available'],
+    ['b2', 'GARLIC BREAD', 'sliced home made crusty french bread toasted with garlic butter', '$4.95', 4.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/garlic-1920w.jpg', 'Breads & Soups', 'Available'],
+    ['s1', 'FRENCH ONION SOUP', '', '$18.00', 18.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/onion-soup-ff70c88d-1920w.jpg', 'Breads & Soups', 'Available'],
+    // Appetizers & Salads
+    ['sa1', 'HOUSE SALAD', 'spring mix and crisp romaine lettuce tossed with our house dressing and balsamic reduction', '(S) $14.95 (L)$16.95', 14.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/hou.salad-1920w.jpg', 'Appetizers & Salads', 'Available'],
+    ['sa2', 'CAESAR SALAD', 'crisp romaine lettuce with homemade Caesar dressing, parmesan cheese and homemade garlic crouton', '(S) $14.95 (L)$16.95', 14.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ceaser-1920w.jpg', 'Appetizers & Salads', 'Available'],
+    // Hot Appetizers
+    ['ha1', 'ESCARGOTS A LAD PARISIENNE', 'baked snails in a cognac, garlic, & herb butter', '$18.00', 18.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ecsago-a9f326c4-1920w.jpg', 'Hot Appetizers', 'Available'],
+    // Pasta
+    ['p1', 'PENNE POMODORO', 'with Italian plum tomatoes and fresh basil', '$30.00', 30.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tom-1920w.jpg', 'The Classic Art of Pasta', 'Available'],
+    ['p2', 'PENNE ALFREDO', 'tossed in a rich parmigiano cheese cream sauce', '$30.00', 30.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cream-1920w.jpg', 'The Classic Art of Pasta', 'Available'],
+    // Specialties
+    ['hs3', 'BEEF WELLINGTON', 'tenderloin of beef wrapped with prosciutto, foie gras purée, mushroom & truffle duxelle, baked in a flaky puff pastry', '$65.00', 65.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/wellington-1920w.jpg', 'Henry\'s Specialties', 'Available'],
+    ['hs4', 'RACK OF LAMB', 'with a Provençale herbs crust and rosemary jus', '$65.00', 65.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lamb-1920w.jpg', 'Henry\'s Specialties', 'Available'],
+    // Desserts
+    ['d1', 'SIGNATURE CHEESE CAKE', 'with brandied blueberries', '$15.00', 15.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cheese+cake-1920w.jpg', 'Homemade Desserts', 'Available'],
+    // Wine List
+    ['w1', 'HOUSE RED (LE VILLAGEOIS)', 'FRANCE (DRY)', '(8OZ) $15.00', 15.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOUSE.RED-1920w.jpg', 'Wine List', 'Available'],
+    ['w10', 'HOUSE WHITE (HOCHTALER)', 'B.C. (DRY)', '(8OZ) $15.00', 15.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOCHT-1920w.jpg', 'Wine List', 'Available']
+  ];
+  sheet.getRange(2, 1, initialMenu.length, initialMenu[0].length).setValues(initialMenu);
 }

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import HeroSlider from './components/HeroSlider';
 import AboutSection from './components/AboutSection';
@@ -14,13 +14,66 @@ import SideMenu from './components/SideMenu';
 import MobileMenu from './components/MobileMenu';
 import FullscreenPrompt from './components/FullscreenPrompt';
 import VideoBackground from './components/VideoBackground';
-import type { CartItem, MenuItem } from './types';
+import type { CartItem, MenuItem, MenuCategory } from './types';
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQWgtwwi5Zc6yO8lCUMmXDNlHzHFKFeQ6FBoMPlqqhZXolqRnfa_voOjnmPn_84eVj/exec';
 
 const App: React.FC = () => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const [menu, setMenu] = useState<MenuCategory[]>([]);
+    const [flatMenu, setFlatMenu] = useState<MenuItem[]>([]);
+    const [isLoadingMenu, setIsLoadingMenu] = useState(true);
+    const [menuError, setMenuError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchMenu = async () => {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getMenu`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    const menuItems: MenuItem[] = result.data;
+                    setFlatMenu(menuItems);
+
+                    // Group items by category
+                    const groupedMenu = menuItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
+                        const category = item.category || 'Uncategorized';
+                        if (!acc[category]) {
+                            acc[category] = [];
+                        }
+                        // Only add available items to be displayed on the menu
+                        if (item.status === 'Available') {
+                           acc[category].push(item);
+                        }
+                        return acc;
+                    }, {});
+
+                    const menuCategories: MenuCategory[] = Object.keys(groupedMenu).map(title => ({
+                        title,
+                        items: groupedMenu[title]
+                    }));
+                    
+                    setMenu(menuCategories);
+                } else {
+                    throw new Error(result.message || 'Failed to fetch menu data.');
+                }
+            } catch (error) {
+                console.error("Error fetching menu:", error);
+                setMenuError(error instanceof Error ? error.message : String(error));
+            } finally {
+                setIsLoadingMenu(false);
+            }
+        };
+
+        fetchMenu();
+    }, []);
 
     const handleAddToCart = (item: MenuItem) => {
         setCartItems(prevItems => {
@@ -81,6 +134,7 @@ const App: React.FC = () => {
                 onUpdateQuantity={handleUpdateQuantity}
                 onClearCart={handleClearCart}
                 onAddToCart={handleAddToCart}
+                fullMenu={flatMenu}
             />
 
             {selectedImage && <ImageModal src={selectedImage} onClose={() => setSelectedImage(null)} />}
@@ -88,7 +142,13 @@ const App: React.FC = () => {
             <main>
                 <HeroSlider />
                 <AboutSection />
-                <MenuSection onAddToCart={handleAddToCart} onImageClick={handleOpenImage} />
+                <MenuSection 
+                    menu={menu}
+                    isLoading={isLoadingMenu}
+                    error={menuError}
+                    onAddToCart={handleAddToCart} 
+                    onImageClick={handleOpenImage} 
+                />
                 <StoreInfoSection />
                 <GallerySection onImageClick={handleOpenImage} />
                 <BookingSection />
