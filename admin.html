@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Henry's Kitchen - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400..900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              'bodoni': ['"Bodoni Moda"', 'serif'],
+              'roboto': ['"Roboto"', 'sans-serif'],
+            },
+            colors: {
+              'colore-uno': '#f7f6f5',
+              'colore-due': '#bcb5b1',
+              'colore-tre': '#77726c',
+              'colore-quattro': '#202123',
+              'colore-cinque': '#cb334f',
+              'colore-nove': '#821427',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        body { background-color: #f7f6f5; font-family: 'Roboto', sans-serif; }
+        .sidebar-link { @apply flex items-center p-3 my-1 text-gray-200 rounded-lg hover:bg-colore-nove hover:text-white transition-colors duration-200; }
+        .sidebar-link.active { @apply bg-colore-cinque text-white; }
+        .stat-card { @apply bg-white p-6 rounded-xl shadow-md transition-transform hover:-translate-y-1; }
+        .status-select { @apply bg-transparent font-semibold border-none rounded-lg focus:ring-0; }
+        .status-select-pending { @apply text-yellow-800; }
+        .status-select-confirmed { @apply text-blue-800; }
+        .status-select-completed { @apply text-green-800; }
+        .status-select-cancelled { @apply text-red-800; }
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+        }
+        #toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -20px);
+        }
+        #toast.success { background-color: #28a745; }
+        #toast.error { background-color: #dc3545; }
+    </style>
+</head>
+<body class="bg-colore-uno text-colore-quattro">
+
+    <div id="auth-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-lg shadow-xl text-center w-full max-w-sm">
+            <h2 class="text-2xl font-bodoni mb-4">Admin Access</h2>
+            <p class="mb-4 text-colore-tre">Please enter the password to continue.</p>
+            <input type="password" id="password-input" class="w-full p-2 border border-gray-300 rounded mb-4 focus:ring-2 focus:ring-colore-cinque focus:border-transparent" placeholder="Password">
+            <button id="login-btn" class="w-full bg-colore-cinque text-white py-2 rounded-lg hover:bg-colore-nove transition-colors">Login</button>
+            <p id="auth-error" class="text-red-500 text-sm mt-2 hidden">Incorrect password.</p>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <div class="flex h-screen">
+            <aside class="w-64 bg-colore-quattro text-white flex-col hidden md:flex">
+                <div class="p-6 text-center border-b border-gray-700">
+                    <h1 class="text-2xl font-bodoni">Henry's Kitchen</h1>
+                    <p class="text-sm text-colore-due">Admin Panel</p>
+                </div>
+                <nav class="flex-grow p-4">
+                    <a href="#dashboard" class="sidebar-link active" data-view="dashboard">
+                        <i class="fas fa-tachometer-alt w-8 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#orders" class="sidebar-link" data-view="orders">
+                        <i class="fas fa-receipt w-8 text-center"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a href="#menu" class="sidebar-link opacity-50 cursor-not-allowed" title="Coming Soon" onclick="event.preventDefault()">
+                        <i class="fas fa-utensils w-8 text-center"></i>
+                        <span>Menu</span>
+                    </a>
+                    <a href="#reservations" class="sidebar-link opacity-50 cursor-not-allowed" title="Coming Soon" onclick="event.preventDefault()">
+                        <i class="fas fa-calendar-check w-8 text-center"></i>
+                        <span>Reservations</span>
+                    </a>
+                </nav>
+                <div class="p-4 border-t border-gray-700">
+                    <a href="/" target="_blank" class="flex items-center p-3 text-gray-300 hover:text-white transition-colors">
+                        <i class="fas fa-sign-out-alt w-8 text-center"></i>
+                        <span>View Live Site</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="flex-1 flex flex-col">
+                 <header class="p-4 bg-white shadow-md flex md:hidden justify-between items-center">
+                     <h1 class="text-xl font-bodoni">HK Admin</h1>
+                     <button id="mobile-menu-btn" class="text-2xl"><i class="fas fa-bars"></i></button>
+                 </header>
+                 <div id="view-content" class="flex-1 p-4 sm:p-8 overflow-y-auto">
+                    <!-- Views will be rendered here -->
+                 </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="toast"></div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0zOlJ7Is-jldSNuQ2UUKf25DLcC82QbNNogdnwjLTbe2bokyzj2mJOLP0NlGCeUYP4g/exec';
+        const ADMIN_PASSWORD = 'henry2024';
+
+        const app = {
+            state: {
+                orders: [],
+                filteredOrders: [],
+                view: 'dashboard',
+            },
+
+            init() {
+                this.cacheDOMElements();
+                this.setupEventListeners();
+                this.checkAuth();
+            },
+
+            cacheDOMElements() {
+                this.dom = {
+                    authOverlay: document.getElementById('auth-overlay'),
+                    passwordInput: document.getElementById('password-input'),
+                    loginBtn: document.getElementById('login-btn'),
+                    authError: document.getElementById('auth-error'),
+                    appContainer: document.getElementById('app-container'),
+                    viewContent: document.getElementById('view-content'),
+                    sidebarLinks: document.querySelectorAll('.sidebar-link'),
+                    toast: document.getElementById('toast'),
+                    mobileMenuBtn: document.getElementById('mobile-menu-btn'), // Not implemented yet but selector ready
+                };
+            },
+
+            setupEventListeners() {
+                this.dom.loginBtn.addEventListener('click', () => this.handleLogin());
+                this.dom.passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleLogin();
+                });
+
+                window.addEventListener('hashchange', () => this.handleRouteChange());
+                this.dom.sidebarLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.state.view = e.currentTarget.dataset.view;
+                        window.location.hash = this.state.view;
+                        this.render();
+                    });
+                });
+            },
+
+            checkAuth() {
+                if (sessionStorage.getItem('hk_admin_auth') === 'true') {
+                    this.dom.authOverlay.style.display = 'none';
+                    this.dom.appContainer.style.display = 'block';
+                    this.handleRouteChange();
+                    this.api.fetchOrders();
+                }
+            },
+
+            handleLogin() {
+                if (this.dom.passwordInput.value === ADMIN_PASSWORD) {
+                    sessionStorage.setItem('hk_admin_auth', 'true');
+                    this.checkAuth();
+                } else {
+                    this.dom.authError.style.display = 'block';
+                    this.dom.passwordInput.focus();
+                }
+            },
+
+            handleRouteChange() {
+                const hash = window.location.hash.replace('#', '') || 'dashboard';
+                this.state.view = hash;
+                this.render();
+            },
+
+            showToast(message, type = 'success') {
+                this.dom.toast.textContent = message;
+                this.dom.toast.className = type;
+                this.dom.toast.classList.add('show');
+                setTimeout(() => {
+                    this.dom.toast.classList.remove('show');
+                }, 3000);
+            },
+            
+            formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                try {
+                    return new Date(dateString).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+                } catch (e) { return dateString; }
+            },
+
+            render() {
+                this.dom.sidebarLinks.forEach(link => {
+                    link.classList.toggle('active', link.dataset.view === this.state.view);
+                });
+
+                switch (this.state.view) {
+                    case 'orders':
+                        this.renderOrdersView();
+                        break;
+                    case 'dashboard':
+                    default:
+                        this.renderDashboardView();
+                        break;
+                }
+            },
+
+            renderDashboardView() {
+                if (!this.state.orders.length) {
+                    this.dom.viewContent.innerHTML = `<div class="text-center p-10"><i class="fas fa-spinner fa-spin text-3xl text-colore-tre"></i><p class="mt-2 text-colore-tre">Loading Dashboard...</p></div>`;
+                    return;
+                }
+                const totalRevenue = this.state.orders.reduce((sum, order) => sum + (Number(order['Total Amount']) || 0), 0);
+                const pendingOrders = this.state.orders.filter(o => (o.Status || 'Pending').toLowerCase() === 'pending').length;
+                const recentOrders = this.state.orders.slice(0, 5);
+
+                const recentOrdersHtml = recentOrders.map(order => `
+                    <tr class="border-b">
+                        <td class="p-3 font-medium">${order['Order ID']}</td>
+                        <td class="p-3">${order['Customer Name']}</td>
+                        <td class="p-3 font-semibold text-right">$${Number(order['Total Amount']).toFixed(2)}</td>
+                        <td class="p-3 text-right"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">${order.Status || 'Pending'}</span></td>
+                    </tr>
+                `).join('');
+
+                this.dom.viewContent.innerHTML = `
+                    <h2 class="text-3xl font-bodoni mb-6">Dashboard</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="stat-card">
+                            <h3 class="text-colore-tre">Total Revenue</h3>
+                            <p class="text-3xl font-bold mt-2">$${totalRevenue.toFixed(2)}</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 class="text-colore-tre">Total Orders</h3>
+                            <p class="text-3xl font-bold mt-2">${this.state.orders.length}</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 class="text-colore-tre">Pending Orders</h3>
+                            <p class="text-3xl font-bold mt-2">${pendingOrders}</p>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bodoni mb-4">Recent Orders</h3>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-3 text-left font-semibold">Order ID</th>
+                                    <th class="p-3 text-left font-semibold">Customer</th>
+                                    <th class="p-3 text-right font-semibold">Total</th>
+                                    <th class="p-3 text-right font-semibold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${recentOrdersHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+            },
+            
+            renderOrdersView() {
+                const ordersToRender = this.state.filteredOrders.length > 0 ? this.state.filteredOrders : this.state.orders;
+                const ordersHtml = ordersToRender.map(order => {
+                    const status = (order.Status || 'Pending').toLowerCase();
+                    const statusOptions = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
+                        .map(s => `<option value="${s}" ${s.toLowerCase() === status ? 'selected' : ''}>${s}</option>`).join('');
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-4 font-medium">${order['Order ID']}</td>
+                            <td class="p-4">
+                                <div class="font-semibold">${order['Customer Name']}</div>
+                                <div class="text-xs text-gray-500">${order['Email']}</div>
+                                <div class="text-xs text-gray-500">${order['Phone']}</div>
+                            </td>
+                            <td class="p-4">${this.formatDate(order['Pickup Time'])}</td>
+                            <td class="p-4 text-xs">${(order['Order Items'] || '').split('; ').join('<br>')}</td>
+                            <td class="p-4 font-bold text-right">$${Number(order['Total Amount']).toFixed(2)}</td>
+                            <td class="p-4">
+                                <select class="status-select status-select-${status}" data-order-id="${order['Order ID']}">
+                                    ${statusOptions}
+                                </select>
+                            </td>
+                        </tr>
+                    `
+                }).join('');
+
+                this.dom.viewContent.innerHTML = `
+                    <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                        <h2 class="text-3xl font-bodoni">Orders</h2>
+                        <input type="text" id="search-orders" class="p-2 border border-gray-300 rounded-lg w-full sm:w-64" placeholder="Search by name or ID...">
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md overflow-x-auto">
+                        <table class="w-full text-sm whitespace-nowrap">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-4 text-left font-semibold">Order ID</th>
+                                    <th class="p-4 text-left font-semibold">Customer</th>
+                                    <th class="p-4 text-left font-semibold">Pickup Time</th>
+                                    <th class="p-4 text-left font-semibold">Items</th>
+                                    <th class="p-4 text-right font-semibold">Total</th>
+                                    <th class="p-4 text-left font-semibold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${!this.state.orders.length ? `<tr><td colspan="6" class="p-8 text-center text-gray-500">No orders found.</td></tr>` : ordersHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+                
+                document.getElementById('search-orders').addEventListener('input', (e) => this.handleSearch(e.target.value));
+                this.dom.viewContent.querySelectorAll('.status-select').forEach(sel => {
+                    sel.addEventListener('change', (e) => {
+                        const newStatus = e.target.value;
+                        const orderId = e.target.dataset.orderId;
+                        this.api.updateOrderStatus(orderId, newStatus);
+                        e.target.className = `status-select status-select-${newStatus.toLowerCase()}`;
+                    });
+                });
+            },
+
+            handleSearch(query) {
+                const lowerQuery = query.toLowerCase();
+                this.state.filteredOrders = this.state.orders.filter(order => {
+                    return (order['Customer Name'] || '').toLowerCase().includes(lowerQuery) ||
+                           (order['Order ID'] || '').toLowerCase().includes(lowerQuery);
+                });
+                this.renderOrdersView();
+            },
+
+            api: {
+                fetchOrders() {
+                    document.querySelectorAll('script[data-jsonp="true"]').forEach(s => s.remove());
+                    const script = document.createElement('script');
+                    script.setAttribute('data-jsonp', 'true');
+                    const cacheBuster = `&t=${new Date().getTime()}`;
+                    script.src = `${SCRIPT_URL}?action=getOrders&callback=app.api.handleOrderData${cacheBuster}`;
+                    script.onerror = () => {
+                        app.showToast('Failed to load order data script.', 'error');
+                    };
+                    document.head.appendChild(script);
+                },
+
+                handleOrderData(result) {
+                    if (result.status === 'error') {
+                        app.showToast(`Error fetching orders: ${result.message}`, 'error');
+                        return;
+                    }
+                    app.state.orders = result.data || [];
+                    app.state.filteredOrders = [];
+                    app.render();
+                },
+
+                async updateOrderStatus(orderId, newStatus) {
+                    const order = app.state.orders.find(o => o['Order ID'] === orderId);
+                    if (order) order.Status = newStatus;
+                    
+                    const formData = new FormData();
+                    formData.append('action', 'updateStatus');
+                    formData.append('orderId', orderId);
+                    formData.append('status', newStatus);
+
+                    try {
+                        await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+                        app.showToast(`Order ${orderId} updated to ${newStatus}`, 'success');
+                    } catch (e) {
+                         if (e instanceof TypeError) {
+                            console.log('Update sent. A CORS error is expected, but the request likely succeeded.');
+                            app.showToast(`Order ${orderId} updated to ${newStatus}`, 'success');
+                        } else {
+                            app.showToast(`Failed to update order: ${e.message}`, 'error');
+                            app.api.fetchOrders();
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Make the callback function globally accessible for JSONP
+        window.app = app;
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>

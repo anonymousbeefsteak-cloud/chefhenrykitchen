@@ -80,6 +80,7 @@ const App: React.FC = () => {
                 onRemove={handleRemoveFromCart}
                 onUpdateQuantity={handleUpdateQuantity}
                 onClearCart={handleClearCart}
+                onAddToCart={handleAddToCart}
             />
 
             {selectedImage && <ImageModal src={selectedImage} onClose={() => setSelectedImage(null)} />}

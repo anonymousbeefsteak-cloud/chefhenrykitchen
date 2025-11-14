@@ -53,10 +53,24 @@ function verifySheetHeaders(sheet, expectedHeaders) {
 // Handle POST requests from the website pre-order form
 function doPost(e) {
   try {
+    const { action } = e.parameter;
+
+    if (action === 'updateStatus') {
+      const { orderId, status } = e.parameter;
+      if (!orderId || !status) {
+        throw new Error("Missing orderId or status for update action.");
+      }
+      const result = updateOrderStatus(orderId, status);
+      return ContentService
+        .createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Default: create order, for backward compatibility with website form
     const { customerName, customerEmail, customerPhone, pickupTime, orderDetails, subtotal, serviceFee, total } = e.parameter;
 
     if (!customerName || !customerEmail || !customerPhone || !pickupTime || !orderDetails || !total || !subtotal || !serviceFee) {
-      throw new Error("Missing required form data.");
+      throw new Error("Missing required form data for order creation.");
     }
     
     const orderData = {
@@ -83,6 +97,41 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
+
+// New function to update the status of an order
+function updateOrderStatus(orderId, newStatus) {
+  try {
+    const ss = getHenryKitchenSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.ORDERS);
+    
+    verifySheetHeaders(sheet, ORDERS_HEADERS);
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const orderIdColIndex = headers.indexOf('Order ID');
+    const statusColIndex = headers.indexOf('Status');
+    
+    if (orderIdColIndex === -1 || statusColIndex === -1) {
+      throw new Error("Could not find 'Order ID' or 'Status' column in the sheet.");
+    }
+    
+    // Start from 1 to skip header row
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][orderIdColIndex] === orderId) {
+        // Found the row. Column index is 0-based, sheet range is 1-based.
+        sheet.getRange(i + 1, statusColIndex + 1).setValue(newStatus);
+        return { status: 'success', message: `Order ${orderId} status updated to ${newStatus}` };
+      }
+    }
+    
+    return { status: 'error', message: `Order with ID ${orderId} not found.` };
+    
+  } catch (error) {
+    Logger.log('Error updating order status: ' + error.toString());
+    return { status: 'error', message: 'Failed to update order status: ' + error.toString() };
+  }
+}
+
 
 // Create a new order entry in the spreadsheet
 function createOrder(orderData) {
@@ -191,12 +240,53 @@ function sendOrderConfirmation(orderData, orderId) {
   }
 }
 
-// Handle GET requests (for testing the endpoint)
+// Handle GET requests
 function doGet(e) {
+  if (e.parameter.action === 'getOrders') {
+    try {
+      const ss = getHenryKitchenSpreadsheet();
+      const sheet = ss.getSheetByName(SHEET_NAMES.ORDERS);
+      const data = sheet.getDataRange().getValues();
+      
+      let orders = [];
+      if (data.length > 1) {
+        const headers = data.shift();
+        orders = data.map(row => {
+          let order = {};
+          headers.forEach((header, index) => {
+            const key = header.trim();
+            if (key) {
+              order[key] = row[index];
+            }
+          });
+          return order;
+        }).reverse();
+      }
+
+      const responsePayload = JSON.stringify({ status: 'success', data: orders });
+      
+      // Support JSONP for cross-domain requests from the admin panel
+      if (e.parameter.callback) {
+        return ContentService.createTextOutput(`${e.parameter.callback}(${responsePayload})`).setMimeType(ContentService.MimeType.JAVASCRIPT);
+      } else {
+        return ContentService.createTextOutput(responsePayload).setMimeType(ContentService.MimeType.JSON);
+      }
+
+    } catch (error) {
+       Logger.log('doGet getOrders Error: ' + error.message + ' Stack: ' + error.stack);
+       const errorPayload = JSON.stringify({ status: 'error', message: error.toString() });
+        if (e.parameter.callback) {
+            return ContentService.createTextOutput(`${e.parameter.callback}(${errorPayload})`).setMimeType(ContentService.MimeType.JAVASCRIPT);
+        }
+       return ContentService.createTextOutput(errorPayload).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  // Default GET response for testing
   return ContentService
     .createTextOutput(JSON.stringify({ status: 'success', message: 'Henry\'s Kitchen API is running.' }))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
 
 // You can run this function manually from the Apps Script editor to set up your spreadsheet for the first time.
 function initializeApp() {
