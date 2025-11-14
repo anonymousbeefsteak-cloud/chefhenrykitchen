@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from './components/Header';
 import HeroSlider from './components/HeroSlider';
 import AboutSection from './components/AboutSection';
@@ -14,50 +14,13 @@ import SideMenu from './components/SideMenu';
 import MobileMenu from './components/MobileMenu';
 import FullscreenPrompt from './components/FullscreenPrompt';
 import VideoBackground from './components/VideoBackground';
-import type { CartItem, MenuItem, MenuCategory } from './types';
-
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0xGssICWadYoVLblU5lwEDfupKWRgOO_4hLwOYoQI2ddFSrDBe8Unzv7NutFBtbdfUA/exec';
+import type { CartItem, MenuItem } from './types';
 
 const App: React.FC = () => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    
-    const [menuData, setMenuData] = useState<MenuCategory[]>([]);
-    const [isLoadingMenu, setIsLoadingMenu] = useState(true);
-    const [menuError, setMenuError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchMenu = () => {
-            const callbackName = 'jsonp_callback_menu';
-            window[callbackName] = (result: { status: string; data?: MenuCategory[]; message?: string }) => {
-                if (result.status === 'success' && result.data) {
-                    // Filter out items that are "Sold Out"
-                    const availableMenu = result.data.map(category => ({
-                        ...category,
-                        items: category.items.filter(item => item.status !== 'Sold Out')
-                    })).filter(category => category.items.length > 0);
-                    setMenuData(availableMenu);
-                } else {
-                    setMenuError(result.message || 'Failed to load the menu.');
-                }
-                setIsLoadingMenu(false);
-                delete window[callbackName];
-                document.getElementById(callbackName)?.remove();
-            };
-
-            const script = document.createElement('script');
-            script.id = callbackName;
-            script.src = `${SCRIPT_URL}?action=getMenu&callback=${callbackName}&t=${new Date().getTime()}`;
-            script.onerror = () => {
-                setMenuError('An error occurred while trying to fetch the menu.');
-                setIsLoadingMenu(false);
-            };
-            document.head.appendChild(script);
-        };
-        fetchMenu();
-    }, []);
 
     const handleAddToCart = (item: MenuItem) => {
         setCartItems(prevItems => {
@@ -118,7 +81,6 @@ const App: React.FC = () => {
                 onUpdateQuantity={handleUpdateQuantity}
                 onClearCart={handleClearCart}
                 onAddToCart={handleAddToCart}
-                menuData={menuData}
             />
 
             {selectedImage && <ImageModal src={selectedImage} onClose={() => setSelectedImage(null)} />}
@@ -126,13 +88,7 @@ const App: React.FC = () => {
             <main>
                 <HeroSlider />
                 <AboutSection />
-                <MenuSection 
-                    menuData={menuData} 
-                    isLoading={isLoadingMenu} 
-                    error={menuError}
-                    onAddToCart={handleAddToCart} 
-                    onImageClick={handleOpenImage} 
-                />
+                <MenuSection onAddToCart={handleAddToCart} onImageClick={handleOpenImage} />
                 <StoreInfoSection />
                 <GallerySection onImageClick={handleOpenImage} />
                 <BookingSection />

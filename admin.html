@@ -9,44 +9,60 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400..900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
-            fontFamily: { 'bodoni': ['"Bodoni Moda"', 'serif'], 'roboto': ['"Roboto"', 'sans-serif'], },
+            fontFamily: {
+              'bodoni': ['"Bodoni Moda"', 'serif'],
+              'roboto': ['"Roboto"', 'sans-serif'],
+            },
             colors: {
-              'colore-uno': '#f7f6f5', 'colore-due': '#bcb5b1', 'colore-tre': '#77726c',
-              'colore-quattro': '#202123', 'colore-cinque': '#cb334f', 'colore-nove': '#821427',
+              'colore-uno': '#f7f6f5',
+              'colore-due': '#bcb5b1',
+              'colore-tre': '#77726c',
+              'colore-quattro': '#202123',
+              'colore-cinque': '#cb334f',
+              'colore-nove': '#821427',
             }
           }
         }
       }
     </script>
     <style>
-        body { background-color: #f1f5f9; font-family: 'Roboto', sans-serif; }
-        .sidebar { transition: transform 0.3s ease-in-out; }
+        body { background-color: #f7f6f5; font-family: 'Roboto', sans-serif; }
         .sidebar-link { @apply flex items-center p-3 my-1 text-gray-200 rounded-lg hover:bg-colore-nove hover:text-white transition-colors duration-200; }
         .sidebar-link.active { @apply bg-colore-cinque text-white; }
         .stat-card { @apply bg-white p-6 rounded-xl shadow-md transition-transform hover:-translate-y-1; }
-        .status-select { @apply bg-transparent font-semibold border-none rounded-lg focus:ring-0 appearance-none; }
+        .status-select { @apply bg-transparent font-semibold border-none rounded-lg focus:ring-0; }
         .status-select-pending { @apply text-yellow-800; }
         .status-select-confirmed { @apply text-blue-800; }
         .status-select-completed { @apply text-green-800; }
         .status-select-cancelled { @apply text-red-800; }
-        #toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: white; font-weight: 500; z-index: 9999; transition: bottom 0.5s ease-in-out; }
-        #toast.show { bottom: 20px; }
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+        }
+        #toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -20px);
+        }
         #toast.success { background-color: #28a745; }
         #toast.error { background-color: #dc3545; }
-        .modal { @apply fixed inset-0 bg-black/60 z-50 flex items-center justify-center transition-opacity duration-300 invisible opacity-0; }
-        .modal.show { @apply visible opacity-100; }
-        .modal-content { @apply bg-white rounded-lg shadow-xl w-full max-w-2xl transform transition-transform duration-300 scale-95; }
-        .modal.show .modal-content { @apply scale-100; }
-        .loader { @apply w-8 h-8 border-4 border-colore-cinque border-t-transparent rounded-full animate-spin; }
-        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-slate-100 text-colore-quattro">
+<body class="bg-colore-uno text-colore-quattro">
 
     <div id="auth-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white p-8 rounded-lg shadow-xl text-center w-full max-w-sm">
@@ -59,32 +75,42 @@
     </div>
 
     <div id="app-container" class="hidden">
-        <div class="flex h-screen bg-slate-100">
-            <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 md:hidden hidden"></div>
-            <aside id="sidebar" class="sidebar w-64 bg-colore-quattro text-white flex-col flex-shrink-0 absolute md:relative -translate-x-full md:translate-x-0 z-30 h-full">
+        <div class="flex h-screen">
+            <aside class="w-64 bg-colore-quattro text-white flex-col hidden md:flex">
                 <div class="p-6 text-center border-b border-gray-700">
                     <h1 class="text-2xl font-bodoni">Henry's Kitchen</h1>
                     <p class="text-sm text-colore-due">Admin Panel</p>
                 </div>
                 <nav class="flex-grow p-4">
-                    <a href="#dashboard" class="sidebar-link active" data-view="dashboard"><i class="fas fa-tachometer-alt w-8 text-center"></i><span>Dashboard</span></a>
-                    <a href="#orders" class="sidebar-link" data-view="orders"><i class="fas fa-receipt w-8 text-center"></i><span>Orders</span></a>
-                    <a href="#menu" class="sidebar-link" data-view="menu"><i class="fas fa-utensils w-8 text-center"></i><span>Menu</span></a>
-                    <a href="#analytics" class="sidebar-link" data-view="analytics"><i class="fas fa-chart-line w-8 text-center"></i><span>Analytics</span></a>
-                    <a href="#settings" class="sidebar-link" data-view="settings"><i class="fas fa-cog w-8 text-center"></i><span>Settings</span></a>
+                    <a href="#dashboard" class="sidebar-link active" data-view="dashboard">
+                        <i class="fas fa-tachometer-alt w-8 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#orders" class="sidebar-link" data-view="orders">
+                        <i class="fas fa-receipt w-8 text-center"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a href="#menu" class="sidebar-link opacity-50 cursor-not-allowed" title="Coming Soon" onclick="event.preventDefault()">
+                        <i class="fas fa-utensils w-8 text-center"></i>
+                        <span>Menu</span>
+                    </a>
+                    <a href="#reservations" class="sidebar-link opacity-50 cursor-not-allowed" title="Coming Soon" onclick="event.preventDefault()">
+                        <i class="fas fa-calendar-check w-8 text-center"></i>
+                        <span>Reservations</span>
+                    </a>
                 </nav>
                 <div class="p-4 border-t border-gray-700">
                     <a href="/" target="_blank" class="flex items-center p-3 text-gray-300 hover:text-white transition-colors">
-                        <i class="fas fa-sign-out-alt w-8 text-center"></i><span>View Live Site</span>
+                        <i class="fas fa-sign-out-alt w-8 text-center"></i>
+                        <span>View Live Site</span>
                     </a>
                 </div>
             </aside>
 
-            <main class="flex-1 flex flex-col overflow-hidden">
-                 <header class="p-4 bg-white shadow-md flex justify-between items-center z-10">
-                    <button id="mobile-menu-btn" class="text-2xl md:hidden"><i class="fas fa-bars"></i></button>
-                     <h1 class="text-xl font-bodoni md:hidden">HK Admin</h1>
-                     <div class="text-right"><span id="current-view-title" class="font-bold text-lg hidden md:inline">Dashboard</span></div>
+            <main class="flex-1 flex flex-col">
+                 <header class="p-4 bg-white shadow-md flex md:hidden justify-between items-center">
+                     <h1 class="text-xl font-bodoni">HK Admin</h1>
+                     <button id="mobile-menu-btn" class="text-2xl"><i class="fas fa-bars"></i></button>
                  </header>
                  <div id="view-content" class="flex-1 p-4 sm:p-8 overflow-y-auto">
                     <!-- Views will be rendered here -->
@@ -92,85 +118,46 @@
             </main>
         </div>
     </div>
-
-    <div id="menu-item-modal" class="modal">
-      <div class="modal-content max-h-[90vh] overflow-y-auto">
-          <form id="menu-item-form" class="p-8">
-              <h3 id="modal-title" class="text-2xl font-bodoni mb-6">Add New Menu Item</h3>
-              <input type="hidden" id="menu-item-id">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                      <label for="menu-item-name" class="block text-sm font-medium text-gray-700">Name</label>
-                      <input type="text" id="menu-item-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                  </div>
-                   <div>
-                      <label for="menu-item-category" class="block text-sm font-medium text-gray-700">Category</label>
-                      <input type="text" id="menu-item-category" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                  </div>
-                  <div>
-                      <label for="menu-item-price-display" class="block text-sm font-medium text-gray-700">Price (Display, e.g., $15.00)</label>
-                      <input type="text" id="menu-item-price-display" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                  </div>
-                   <div>
-                      <label for="menu-item-price-value" class="block text-sm font-medium text-gray-700">Price (Value, e.g., 15.00)</label>
-                      <input type="number" step="0.01" id="menu-item-price-value" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                  </div>
-                  <div class="md:col-span-2">
-                      <label for="menu-item-image" class="block text-sm font-medium text-gray-700">Image URL</label>
-                      <input type="url" id="menu-item-image" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
-                  </div>
-                  <div class="md:col-span-2">
-                      <label for="menu-item-description" class="block text-sm font-medium text-gray-700">Description</label>
-                      <textarea id="menu-item-description" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></textarea>
-                  </div>
-                  <div>
-                      <label for="menu-item-status" class="block text-sm font-medium text-gray-700">Status</label>
-                      <select id="menu-item-status" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
-                          <option value="Available">Available</option>
-                          <option value="Sold Out">Sold Out</option>
-                      </select>
-                  </div>
-              </div>
-              <div class="mt-8 flex justify-end gap-4">
-                  <button type="button" id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-                  <button type="submit" id="modal-save-btn" class="px-4 py-2 bg-colore-cinque text-white rounded-md hover:bg-colore-nove">Save Item</button>
-              </div>
-          </form>
-      </div>
-    </div>
     
     <div id="toast"></div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0xGssICWadYoVLblU5lwEDfupKWRgOO_4hLwOYoQI2ddFSrDBe8Unzv7NutFBtbdfUA/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0zOlJ7Is-jldSNuQ2UUKf25DLcC82QbNNogdnwjLTbe2bokyzj2mJOLP0NlGCeUYP4g/exec';
         const ADMIN_PASSWORD = 'henry2024';
 
-        // --- App Object ---
         const app = {
             state: {
-                orders: [], menu: [], analytics: null, settings: null,
+                orders: [],
+                filteredOrders: [],
                 view: 'dashboard',
             },
+
             init() {
                 this.cacheDOMElements();
                 this.setupEventListeners();
                 this.checkAuth();
             },
+
             cacheDOMElements() {
                 this.dom = {
-                    authOverlay: document.getElementById('auth-overlay'), passwordInput: document.getElementById('password-input'),
-                    loginBtn: document.getElementById('login-btn'), authError: document.getElementById('auth-error'),
-                    appContainer: document.getElementById('app-container'), viewContent: document.getElementById('view-content'),
-                    sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'),
-                    sidebarLinks: document.querySelectorAll('.sidebar-link'), toast: document.getElementById('toast'),
-                    mobileMenuBtn: document.getElementById('mobile-menu-btn'), currentViewTitle: document.getElementById('current-view-title'),
-                    menuItemModal: document.getElementById('menu-item-modal'), menuItemForm: document.getElementById('menu-item-form'),
-                    modalTitle: document.getElementById('modal-title'), modalCancelBtn: document.getElementById('modal-cancel-btn'),
+                    authOverlay: document.getElementById('auth-overlay'),
+                    passwordInput: document.getElementById('password-input'),
+                    loginBtn: document.getElementById('login-btn'),
+                    authError: document.getElementById('auth-error'),
+                    appContainer: document.getElementById('app-container'),
+                    viewContent: document.getElementById('view-content'),
+                    sidebarLinks: document.querySelectorAll('.sidebar-link'),
+                    toast: document.getElementById('toast'),
+                    mobileMenuBtn: document.getElementById('mobile-menu-btn'), // Not implemented yet but selector ready
                 };
             },
+
             setupEventListeners() {
                 this.dom.loginBtn.addEventListener('click', () => this.handleLogin());
-                this.dom.passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.handleLogin(); });
+                this.dom.passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleLogin();
+                });
+
                 window.addEventListener('hashchange', () => this.handleRouteChange());
                 this.dom.sidebarLinks.forEach(link => {
                     link.addEventListener('click', (e) => {
@@ -178,22 +165,19 @@
                         this.state.view = e.currentTarget.dataset.view;
                         window.location.hash = this.state.view;
                         this.render();
-                        if (window.innerWidth < 768) this.toggleSidebar(false);
                     });
                 });
-                this.dom.mobileMenuBtn.addEventListener('click', () => this.toggleSidebar());
-                this.dom.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
-                this.dom.modalCancelBtn.addEventListener('click', () => this.toggleMenuItemModal(false));
-                this.dom.menuItemForm.addEventListener('submit', (e) => this.handleMenuItemSave(e));
             },
+
             checkAuth() {
                 if (sessionStorage.getItem('hk_admin_auth') === 'true') {
                     this.dom.authOverlay.style.display = 'none';
                     this.dom.appContainer.style.display = 'block';
                     this.handleRouteChange();
-                    this.api.fetchAllData();
+                    this.api.fetchOrders();
                 }
             },
+
             handleLogin() {
                 if (this.dom.passwordInput.value === ADMIN_PASSWORD) {
                     sessionStorage.setItem('hk_admin_auth', 'true');
@@ -203,381 +187,216 @@
                     this.dom.passwordInput.focus();
                 }
             },
+
             handleRouteChange() {
                 const hash = window.location.hash.replace('#', '') || 'dashboard';
-                if (this.state.view !== hash) {
-                    this.state.view = hash;
-                    this.render();
-                }
+                this.state.view = hash;
+                this.render();
             },
-            toggleSidebar(forceOpen) {
-                const isOpen = this.dom.sidebar.classList.contains('translate-x-0');
-                if (forceOpen === true || !isOpen) {
-                    this.dom.sidebar.classList.remove('-translate-x-full');
-                    this.dom.sidebar.classList.add('translate-x-0');
-                    this.dom.sidebarOverlay.classList.remove('hidden');
-                } else {
-                    this.dom.sidebar.classList.add('-translate-x-full');
-                    this.dom.sidebar.classList.remove('translate-x-0');
-                    this.dom.sidebarOverlay.classList.add('hidden');
-                }
-            },
+
             showToast(message, type = 'success') {
                 this.dom.toast.textContent = message;
                 this.dom.toast.className = type;
                 this.dom.toast.classList.add('show');
-                setTimeout(() => { this.dom.toast.classList.remove('show'); }, 3000);
-            },
-            formatDate(dateString) {
-                if (!dateString) return 'N/A';
-                try { return new Date(dateString).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-                catch (e) { return dateString; }
+                setTimeout(() => {
+                    this.dom.toast.classList.remove('show');
+                }, 3000);
             },
             
-            // --- Render Functions ---
+            formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                try {
+                    return new Date(dateString).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+                } catch (e) { return dateString; }
+            },
+
             render() {
-                const viewName = this.state.view.charAt(0).toUpperCase() + this.state.view.slice(1);
-                this.dom.currentViewTitle.textContent = viewName;
                 this.dom.sidebarLinks.forEach(link => {
                     link.classList.toggle('active', link.dataset.view === this.state.view);
                 });
-                
-                const renderFunction = this[`render${viewName}View`];
-                if (typeof renderFunction === 'function') {
-                    renderFunction.call(this);
-                } else {
-                    this.renderDashboardView();
+
+                switch (this.state.view) {
+                    case 'orders':
+                        this.renderOrdersView();
+                        break;
+                    case 'dashboard':
+                    default:
+                        this.renderDashboardView();
+                        break;
                 }
             },
-            renderLoading(viewName) {
-                this.dom.viewContent.innerHTML = `<div class="text-center p-10"><div class="loader mx-auto"></div><p class="mt-4 text-colore-tre">Loading ${viewName}...</p></div>`;
-            },
+
             renderDashboardView() {
-                if (!this.state.orders || !this.state.analytics) { this.renderLoading('Dashboard'); return; }
-                const { totalRevenue, totalOrders } = this.state.analytics.summary;
+                if (!this.state.orders.length) {
+                    this.dom.viewContent.innerHTML = `<div class="text-center p-10"><i class="fas fa-spinner fa-spin text-3xl text-colore-tre"></i><p class="mt-2 text-colore-tre">Loading Dashboard...</p></div>`;
+                    return;
+                }
+                const totalRevenue = this.state.orders.reduce((sum, order) => sum + (Number(order['Total Amount']) || 0), 0);
                 const pendingOrders = this.state.orders.filter(o => (o.Status || 'Pending').toLowerCase() === 'pending').length;
                 const recentOrders = this.state.orders.slice(0, 5);
 
                 const recentOrdersHtml = recentOrders.map(order => `
                     <tr class="border-b">
-                        <td class="p-3 font-medium">${order['Order ID']}</td> <td class="p-3">${order['Customer Name']}</td>
+                        <td class="p-3 font-medium">${order['Order ID']}</td>
+                        <td class="p-3">${order['Customer Name']}</td>
                         <td class="p-3 font-semibold text-right">$${Number(order['Total Amount']).toFixed(2)}</td>
                         <td class="p-3 text-right"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">${order.Status || 'Pending'}</span></td>
-                    </tr>`).join('');
+                    </tr>
+                `).join('');
 
                 this.dom.viewContent.innerHTML = `
                     <h2 class="text-3xl font-bodoni mb-6">Dashboard</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="stat-card"><h3 class="text-colore-tre">Total Revenue</h3><p class="text-3xl font-bold mt-2">$${totalRevenue.toFixed(2)}</p></div>
-                        <div class="stat-card"><h3 class="text-colore-tre">Total Orders</h3><p class="text-3xl font-bold mt-2">${totalOrders}</p></div>
-                        <div class="stat-card"><h3 class="text-colore-tre">Pending Orders</h3><p class="text-3xl font-bold mt-2">${pendingOrders}</p></div>
+                        <div class="stat-card">
+                            <h3 class="text-colore-tre">Total Revenue</h3>
+                            <p class="text-3xl font-bold mt-2">$${totalRevenue.toFixed(2)}</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 class="text-colore-tre">Total Orders</h3>
+                            <p class="text-3xl font-bold mt-2">${this.state.orders.length}</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 class="text-colore-tre">Pending Orders</h3>
+                            <p class="text-3xl font-bold mt-2">${pendingOrders}</p>
+                        </div>
                     </div>
                     <h3 class="text-2xl font-bodoni mb-4">Recent Orders</h3>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden"><table class="w-full text-sm">
-                        <thead class="bg-gray-50"><tr>
-                            <th class="p-3 text-left font-semibold">Order ID</th> <th class="p-3 text-left font-semibold">Customer</th>
-                            <th class="p-3 text-right font-semibold">Total</th> <th class="p-3 text-right font-semibold">Status</th>
-                        </tr></thead>
-                        <tbody>${recentOrdersHtml}</tbody>
-                    </table></div>`;
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-3 text-left font-semibold">Order ID</th>
+                                    <th class="p-3 text-left font-semibold">Customer</th>
+                                    <th class="p-3 text-right font-semibold">Total</th>
+                                    <th class="p-3 text-right font-semibold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${recentOrdersHtml}</tbody>
+                        </table>
+                    </div>
+                `;
             },
+            
             renderOrdersView() {
-                if (!this.state.orders) { this.renderLoading('Orders'); return; }
-                const ordersHtml = this.state.orders.map(order => {
+                const ordersToRender = this.state.filteredOrders.length > 0 ? this.state.filteredOrders : this.state.orders;
+                const ordersHtml = ordersToRender.map(order => {
                     const status = (order.Status || 'Pending').toLowerCase();
                     const statusOptions = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
                         .map(s => `<option value="${s}" ${s.toLowerCase() === status ? 'selected' : ''}>${s}</option>`).join('');
+
                     return `
                         <tr class="border-b hover:bg-gray-50">
                             <td class="p-4 font-medium">${order['Order ID']}</td>
-                            <td class="p-4"><div class="font-semibold">${order['Customer Name']}</div><div class="text-xs text-gray-500">${order['Email']} / ${order['Phone']}</div></td>
+                            <td class="p-4">
+                                <div class="font-semibold">${order['Customer Name']}</div>
+                                <div class="text-xs text-gray-500">${order['Email']}</div>
+                                <div class="text-xs text-gray-500">${order['Phone']}</div>
+                            </td>
                             <td class="p-4">${this.formatDate(order['Pickup Time'])}</td>
-                            <td class="p-4 text-xs max-w-xs truncate" title="${order['Order Items']}">${(order['Order Items'] || '').replace(/; /g, ', ')}</td>
+                            <td class="p-4 text-xs">${(order['Order Items'] || '').split('; ').join('<br>')}</td>
                             <td class="p-4 font-bold text-right">$${Number(order['Total Amount']).toFixed(2)}</td>
                             <td class="p-4">
-                                <select class="status-select status-select-${status}" data-order-id="${order['Order ID']}">${statusOptions}</select>
+                                <select class="status-select status-select-${status}" data-order-id="${order['Order ID']}">
+                                    ${statusOptions}
+                                </select>
                             </td>
-                        </tr>`;
+                        </tr>
+                    `
                 }).join('');
+
                 this.dom.viewContent.innerHTML = `
-                    <h2 class="text-3xl font-bodoni mb-6">Orders (${this.state.orders.length})</h2>
+                    <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                        <h2 class="text-3xl font-bodoni">Orders</h2>
+                        <input type="text" id="search-orders" class="p-2 border border-gray-300 rounded-lg w-full sm:w-64" placeholder="Search by name or ID...">
+                    </div>
                     <div class="bg-white rounded-xl shadow-md overflow-x-auto">
                         <table class="w-full text-sm whitespace-nowrap">
-                            <thead class="bg-gray-50"><tr>
-                                <th class="p-4 text-left font-semibold">Order ID</th> <th class="p-4 text-left font-semibold">Customer</th>
-                                <th class="p-4 text-left font-semibold">Pickup Time</th><th class="p-4 text-left font-semibold">Items</th>
-                                <th class="p-4 text-right font-semibold">Total</th> <th class="p-4 text-left font-semibold">Status</th>
-                            </tr></thead>
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-4 text-left font-semibold">Order ID</th>
+                                    <th class="p-4 text-left font-semibold">Customer</th>
+                                    <th class="p-4 text-left font-semibold">Pickup Time</th>
+                                    <th class="p-4 text-left font-semibold">Items</th>
+                                    <th class="p-4 text-right font-semibold">Total</th>
+                                    <th class="p-4 text-left font-semibold">Status</th>
+                                </tr>
+                            </thead>
                             <tbody>${!this.state.orders.length ? `<tr><td colspan="6" class="p-8 text-center text-gray-500">No orders found.</td></tr>` : ordersHtml}</tbody>
                         </table>
-                    </div>`;
+                    </div>
+                `;
+                
+                document.getElementById('search-orders').addEventListener('input', (e) => this.handleSearch(e.target.value));
                 this.dom.viewContent.querySelectorAll('.status-select').forEach(sel => {
                     sel.addEventListener('change', (e) => {
-                        this.api.updateOrderStatus(e.target.dataset.orderId, e.target.value);
-                        e.target.className = `status-select status-select-${e.target.value.toLowerCase()}`;
+                        const newStatus = e.target.value;
+                        const orderId = e.target.dataset.orderId;
+                        this.api.updateOrderStatus(orderId, newStatus);
+                        e.target.className = `status-select status-select-${newStatus.toLowerCase()}`;
                     });
                 });
             },
-            renderMenuView() {
-                if (!this.state.menu) { this.renderLoading('Menu'); return; }
-                 const menuHtml = this.state.menu.map(item => `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-4"><img src="${item.Image}" class="w-16 h-12 object-cover rounded-md"></td>
-                        <td class="p-4"><div class="font-semibold">${item.Name}</div><div class="text-xs text-gray-500">${item.Category}</div></td>
-                        <td class="p-4 font-bold">${item.Price}</td>
-                        <td class="p-4">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" value="" class="sr-only peer" ${item.Status === 'Available' ? 'checked' : ''} onchange="app.handleMenuItemStatusToggle('${item.ID}', this.checked)">
-                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-green-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                            </label>
-                        </td>
-                        <td class="p-4 text-right">
-                            <button class="text-blue-600 hover:text-blue-800 p-2" onclick="app.handleMenuItemEdit('${item.ID}')"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="text-red-600 hover:text-red-800 p-2" onclick="app.handleMenuItemDelete('${item.ID}', '${item.Name}')"><i class="fas fa-trash-alt"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-                this.dom.viewContent.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-3xl font-bodoni">Menu Management</h2>
-                        <button id="add-menu-item-btn" class="bg-colore-cinque text-white px-4 py-2 rounded-lg hover:bg-colore-nove"><i class="fas fa-plus mr-2"></i>Add Item</button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-50"><tr>
-                                <th class="p-4 text-left font-semibold">Image</th><th class="p-4 text-left font-semibold">Name</th>
-                                <th class="p-4 text-left font-semibold">Price</th><th class="p-4 text-left font-semibold">Status</th>
-                                <th class="p-4 text-right font-semibold">Actions</th>
-                            </tr></thead>
-                            <tbody>${!this.state.menu.length ? `<tr><td colspan="5" class="p-8 text-center text-gray-500">No menu items found.</td></tr>` : menuHtml}</tbody>
-                        </table>
-                    </div>`;
-                document.getElementById('add-menu-item-btn').addEventListener('click', () => this.handleMenuItemAdd());
-            },
-            renderAnalyticsView() {
-                if (!this.state.analytics) { this.renderLoading('Analytics'); return; }
-                const { summary, topSellers } = this.state.analytics;
-                const topSellersHtml = topSellers.map(item => `<li class="flex justify-between p-2 border-b"><span>${item.name}</span><span class="font-bold">${item.count} sold</span></li>`).join('');
 
-                this.dom.viewContent.innerHTML = `
-                    <h2 class="text-3xl font-bodoni mb-6">Sales Analytics</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="stat-card"><h3 class="text-colore-tre">Total Revenue</h3><p class="text-3xl font-bold mt-2">$${summary.totalRevenue.toFixed(2)}</p></div>
-                        <div class="stat-card"><h3 class="text-colore-tre">Total Orders</h3><p class="text-3xl font-bold mt-2">${summary.totalOrders}</p></div>
-                        <div class="stat-card"><h3 class="text-colore-tre">Avg. Order Value</h3><p class="text-3xl font-bold mt-2">$${summary.averageOrderValue.toFixed(2)}</p></div>
-                    </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
-                            <h3 class="text-xl font-bodoni mb-4">Sales Over Time</h3>
-                            <canvas id="salesChart"></canvas>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-6">
-                            <h3 class="text-xl font-bodoni mb-4">Top Sellers</h3>
-                            <ul>${topSellersHtml || '<p class="text-gray-500">No sales data available.</p>'}</ul>
-                        </div>
-                    </div>`;
-                this.renderSalesChart();
-            },
-            renderSalesChart() {
-                const salesByDate = this.state.analytics.salesByDate;
-                const dates = Object.keys(salesByDate).sort();
-                const sales = dates.map(date => salesByDate[date]);
-                
-                const ctx = document.getElementById('salesChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: dates,
-                        datasets: [{
-                            label: 'Daily Revenue',
-                            data: sales,
-                            backgroundColor: 'rgba(203, 51, 79, 0.2)',
-                            borderColor: 'rgba(203, 51, 79, 1)',
-                            borderWidth: 2, tension: 0.3
-                        }]
-                    },
-                    options: { scales: { y: { beginAtZero: true } } }
+            handleSearch(query) {
+                const lowerQuery = query.toLowerCase();
+                this.state.filteredOrders = this.state.orders.filter(order => {
+                    return (order['Customer Name'] || '').toLowerCase().includes(lowerQuery) ||
+                           (order['Order ID'] || '').toLowerCase().includes(lowerQuery);
                 });
-            },
-            renderSettingsView() {
-                if (!this.state.settings) { this.renderLoading('Settings'); return; }
-                const { businessHours = '', serviceFee = '0.20' } = this.state.settings;
-                this.dom.viewContent.innerHTML = `
-                    <h2 class="text-3xl font-bodoni mb-6">System Settings</h2>
-                    <div class="bg-white rounded-xl shadow-md p-8 max-w-2xl">
-                        <form id="settings-form">
-                            <div class="space-y-6">
-                                <div>
-                                    <label for="business-hours" class="block text-sm font-medium text-gray-700">Business Hours</label>
-                                    <input type="text" id="business-hours" value="${businessHours}" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
-                                </div>
-                                <div>
-                                    <label for="service-fee" class="block text-sm font-medium text-gray-700">Service Fee (e.g., 0.20 for 20%)</label>
-                                    <input type="number" step="0.01" id="service-fee" value="${serviceFee}" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
-                                </div>
-                            </div>
-                            <div class="mt-8">
-                                <button type="submit" class="bg-colore-cinque text-white px-6 py-2 rounded-lg hover:bg-colore-nove">Save Settings</button>
-                            </div>
-                        </form>
-                    </div>`;
-                document.getElementById('settings-form').addEventListener('submit', (e) => this.handleSettingsSave(e));
+                this.renderOrdersView();
             },
 
-            // --- Menu Modal and Actions ---
-            toggleMenuItemModal(show, item = null) {
-                this.dom.menuItemForm.reset();
-                if (item) {
-                    this.dom.modalTitle.textContent = 'Edit Menu Item';
-                    document.getElementById('menu-item-id').value = item.ID;
-                    document.getElementById('menu-item-name').value = item.Name;
-                    document.getElementById('menu-item-category').value = item.Category;
-                    document.getElementById('menu-item-price-display').value = item.Price;
-                    document.getElementById('menu-item-price-value').value = item.PriceValue;
-                    document.getElementById('menu-item-image').value = item.Image;
-                    document.getElementById('menu-item-description').value = item.Description;
-                    document.getElementById('menu-item-status').value = item.Status;
-                } else {
-                    this.dom.modalTitle.textContent = 'Add New Menu Item';
-                }
-                this.dom.menuItemModal.classList.toggle('show', show);
-            },
-            handleMenuItemAdd() { this.toggleMenuItemModal(true); },
-            handleMenuItemEdit(id) {
-                const item = this.state.menu.find(i => i.ID === id);
-                if (item) this.toggleMenuItemModal(true, item);
-            },
-            async handleMenuItemSave(event) {
-                event.preventDefault();
-                const id = document.getElementById('menu-item-id').value;
-                const isEditing = !!id;
-                const itemData = {
-                    id: id,
-                    name: document.getElementById('menu-item-name').value,
-                    category: document.getElementById('menu-item-category').value,
-                    price: document.getElementById('menu-item-price-display').value,
-                    priceValue: document.getElementById('menu-item-price-value').value,
-                    image: document.getElementById('menu-item-image').value,
-                    description: document.getElementById('menu-item-description').value,
-                    status: document.getElementById('menu-item-status').value,
-                };
-                
-                const result = await this.api.saveMenuItem(itemData, isEditing);
-                if(result.status === 'success') {
-                    this.toggleMenuItemModal(false);
-                    this.api.fetchMenu(); // Refresh menu list
-                }
-            },
-            async handleMenuItemStatusToggle(id, isAvailable) {
-                const item = this.state.menu.find(i => i.ID === id);
-                if (item) {
-                    item.Status = isAvailable ? 'Available' : 'Sold Out';
-                    const itemData = {
-                        id: item.ID, name: item.Name, category: item.Category, price: item.Price,
-                        priceValue: item.PriceValue, image: item.Image, description: item.Description, status: item.Status,
-                    };
-                    await this.api.saveMenuItem(itemData, true);
-                }
-            },
-            async handleMenuItemDelete(id, name) {
-                if (confirm(`Are you sure you want to delete "${name}"?`)) {
-                    await this.api.deleteMenuItem(id);
-                    this.api.fetchMenu();
-                }
-            },
-            async handleSettingsSave(event) {
-                event.preventDefault();
-                const settings = {
-                    businessHours: document.getElementById('business-hours').value,
-                    serviceFee: document.getElementById('service-fee').value,
-                };
-                await this.api.updateSettings(settings);
-            },
-            
-            // --- API Calls ---
             api: {
-                async fetchAllData() {
-                    this.fetchOrders(); this.fetchMenu(); this.fetchAnalytics(); this.fetchSettings();
-                },
-                fetchJSONP(action, callbackName) {
+                fetchOrders() {
                     document.querySelectorAll('script[data-jsonp="true"]').forEach(s => s.remove());
                     const script = document.createElement('script');
                     script.setAttribute('data-jsonp', 'true');
                     const cacheBuster = `&t=${new Date().getTime()}`;
-                    script.src = `${SCRIPT_URL}?action=${action}&callback=${callbackName}${cacheBuster}`;
-                    script.onerror = () => app.showToast(`Failed to load ${action} data.`, 'error');
+                    script.src = `${SCRIPT_URL}?action=getOrders&callback=app.api.handleOrderData${cacheBuster}`;
+                    script.onerror = () => {
+                        app.showToast('Failed to load order data script.', 'error');
+                    };
                     document.head.appendChild(script);
                 },
-                postData(formData) {
-                    return fetch(SCRIPT_URL, { method: 'POST', body: formData })
-                        .catch(err => {
-                            if (err instanceof TypeError) { return { status: 'success', message: 'Request sent (CORS error expected).' }; }
-                            throw err;
-                        });
+
+                handleOrderData(result) {
+                    if (result.status === 'error') {
+                        app.showToast(`Error fetching orders: ${result.message}`, 'error');
+                        return;
+                    }
+                    app.state.orders = result.data || [];
+                    app.state.filteredOrders = [];
+                    app.render();
                 },
-                fetchOrders() { this.fetchJSONP('getOrders', 'app.api.handleOrdersData'); },
-                handleOrdersData(result) {
-                    if (result.status === 'success') { app.state.orders = result.data || []; app.render(); } 
-                    else { app.showToast(`Error fetching orders: ${result.message}`, 'error'); }
-                },
-                fetchMenu() { this.fetchJSONP('getMenu', 'app.api.handleMenuData'); },
-                handleMenuData(result) {
-                    if (result.status === 'success') { 
-                        // The backend returns grouped data, we need a flat list for management
-                        const flatMenu = result.data.flatMap(cat => cat.items.map(i => ({...i, Category: cat.title})));
-                        const sheetHeaders = ["ID", "Name", "Description", "Price", "PriceValue", "Image", "Category", "Status"];
-                        // map to sheet columns
-                        const finalMenu = flatMenu.map(i => ({ID: i.id, Name: i.name, Description: i.description, Price: i.price, PriceValue: i.priceValue, Image: i.image, Category: i.Category, Status: i.status}));
-                        app.state.menu = finalMenu; 
-                        app.render(); 
-                    } 
-                    else { app.showToast(`Error fetching menu: ${result.message}`, 'error'); }
-                },
-                fetchAnalytics() { this.fetchJSONP('getAnalytics', 'app.api.handleAnalyticsData'); },
-                handleAnalyticsData(result) {
-                    if (result.status === 'success') { app.state.analytics = result.data || null; app.render(); } 
-                    else { app.showToast(`Error fetching analytics: ${result.message}`, 'error'); }
-                },
-                fetchSettings() { this.fetchJSONP('getSettings', 'app.api.handleSettingsData'); },
-                handleSettingsData(result) {
-                    if (result.status === 'success') { app.state.settings = result.data || {}; app.render(); }
-                    else { app.showToast(`Error fetching settings: ${result.message}`, 'error'); }
-                },
+
                 async updateOrderStatus(orderId, newStatus) {
+                    const order = app.state.orders.find(o => o['Order ID'] === orderId);
+                    if (order) order.Status = newStatus;
+                    
                     const formData = new FormData();
-                    formData.append('action', 'updateOrderStatus');
+                    formData.append('action', 'updateStatus');
                     formData.append('orderId', orderId);
                     formData.append('status', newStatus);
-                    await this.postData(formData);
-                    app.showToast(`Order ${orderId} updated`, 'success');
-                },
-                async saveMenuItem(itemData, isEditing) {
-                    const formData = new FormData();
-                    formData.append('action', isEditing ? 'updateMenuItem' : 'addMenuItem');
-                    Object.keys(itemData).forEach(key => formData.append(key, itemData[key]));
-                    const result = await this.postData(formData);
-                    app.showToast(`Menu item ${isEditing ? 'updated' : 'added'}`, 'success');
-                    return result;
-                },
-                async deleteMenuItem(id) {
-                    const formData = new FormData();
-                    formData.append('action', 'deleteMenuItem');
-                    formData.append('id', id);
-                    await this.postData(formData);
-                    app.showToast(`Menu item deleted`, 'success');
-                },
-                async updateSettings(settings) {
-                    const formData = new FormData();
-                    formData.append('action', 'updateSettings');
-                    Object.keys(settings).forEach(key => formData.append(key, settings[key]));
-                    await this.postData(formData);
-                    app.showToast('Settings saved', 'success');
+
+                    try {
+                        await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+                        app.showToast(`Order ${orderId} updated to ${newStatus}`, 'success');
+                    } catch (e) {
+                         if (e instanceof TypeError) {
+                            console.log('Update sent. A CORS error is expected, but the request likely succeeded.');
+                            app.showToast(`Order ${orderId} updated to ${newStatus}`, 'success');
+                        } else {
+                            app.showToast(`Failed to update order: ${e.message}`, 'error');
+                            app.api.fetchOrders();
+                        }
+                    }
                 }
             }
         };
         
-        // Make callback functions globally accessible for JSONP
+        // Make the callback function globally accessible for JSONP
         window.app = app;
+
         document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
