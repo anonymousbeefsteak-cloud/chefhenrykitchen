@@ -1,7 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
-import { menuData } from '../constants/menuData';
-import type { CartItem, MenuItem } from '../types';
+import type { CartItem, MenuItem, MenuCategory } from '../types';
 
 interface ShoppingCartProps {
     isOpen: boolean;
@@ -11,11 +11,12 @@ interface ShoppingCartProps {
     onUpdateQuantity: (itemId: string, quantity: number) => void;
     onClearCart: () => void;
     onAddToCart: (item: MenuItem) => void;
+    menuData: MenuCategory[];
 }
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0zOlJ7Is-jldSNuQ2UUKf25DLcC82QbNNogdnwjLTbe2bokyzj2mJOLP0NlGCeUYP4g/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0xGssICWadYoVLblU5lwEDfupKWRgOO_4hLwOYoQI2ddFSrDBe8Unzv7NutFBtbdfUA/exec';
 
-const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity, onClearCart, onAddToCart }) => {
+const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity, onClearCart, onAddToCart, menuData }) => {
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [customerName, setCustomerName] = useState('');
     const [customerEmail, setCustomerEmail] = useState('');
@@ -29,7 +30,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
     const [suggestionError, setSuggestionError] = useState<string | null>(null);
 
     const subtotal = cartItems.reduce((acc, item) => acc + item.priceValue * item.quantity, 0);
-    const serviceFee = subtotal * 0.20;
+    const serviceFee = subtotal * 0.20; // This should later be fetched from settings
     const total = subtotal + serviceFee;
 
     useEffect(() => {
@@ -83,14 +84,8 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
                                 items: {
                                     type: Type.OBJECT,
                                     properties: {
-                                        wineName: {
-                                            type: Type.STRING,
-                                            description: "The exact name of the wine from the provided list.",
-                                        },
-                                        pairingReason: {
-                                            type: Type.STRING,
-                                            description: "A brief explanation of why this wine pairs well with the meal.",
-                                        },
+                                        wineName: { type: Type.STRING, description: "The exact name of the wine from the provided list." },
+                                        pairingReason: { type: Type.STRING, description: "A brief explanation of why this wine pairs well with the meal." },
                                     },
                                     required: ["wineName", "pairingReason"]
                                 },
@@ -137,6 +132,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
         setSubmitStatus(null);
 
         const formData = new FormData();
+        formData.append('action', 'createOrder');
         formData.append('customerName', customerName);
         formData.append('customerEmail', customerEmail);
         formData.append('customerPhone', customerPhone);
@@ -147,17 +143,10 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
         formData.append('total', total.toFixed(2));
 
         try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: formData,
-            });
-            // This part is often not reached due to CORS, but if it is, it's a success.
+            await fetch(SCRIPT_URL, { method: 'POST', body: formData, });
             setSubmitStatus('success');
             onClearCart();
         } catch (error) {
-            // With cross-origin POSTs to Google Apps Script, a CORS error is expected
-            // even on a successful submission because the browser can't read the response.
-            // We'll treat the typical "Failed to fetch" TypeError as a success.
             if (error instanceof TypeError) {
                 console.log('Order submitted. A CORS error is expected, but the request likely succeeded.');
                 setSubmitStatus('success');
@@ -255,20 +244,10 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
                                       </div>
                                       
                                       <div className="space-y-2 pt-4 border-t">
-                                        <div className="flex justify-between text-gray-700">
-                                            <span>Subtotal:</span>
-                                            <span>${subtotal.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-gray-700">
-                                            <span>Service Fee (20%):</span>
-                                            <span>${serviceFee.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-xl font-bold">
-                                            <span>Total:</span>
-                                            <span>${total.toFixed(2)}</span>
-                                        </div>
+                                        <div className="flex justify-between text-gray-700"><span>Subtotal:</span><span>${subtotal.toFixed(2)}</span></div>
+                                        <div className="flex justify-between text-gray-700"><span>Service Fee (20%):</span><span>${serviceFee.toFixed(2)}</span></div>
+                                        <div className="flex justify-between items-center text-xl font-bold"><span>Total:</span><span>${total.toFixed(2)}</span></div>
                                       </div>
-
                                       <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2" disabled={isSubmitting}>
                                           {isSubmitting ? <><i className="fas fa-spinner fa-spin"></i> Submitting...</> : "Submit Pre-order"}
                                       </button>
@@ -277,26 +256,13 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
                                   ) : (
                                     <>
                                       <div className="pb-4 mb-4 border-b">
-                                        <button
-                                            onClick={handleGetWinePairing}
-                                            disabled={isFetchingSuggestion}
-                                            className="w-full bg-colore-quattro text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors hover:bg-gray-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
-                                        >
-                                            {isFetchingSuggestion ? (
-                                                <><i className="fas fa-spinner fa-spin"></i><span>Getting Suggestions...</span></>
-                                            ) : (
-                                                <><i className="fas fa-wine-glass-alt"></i><span>Get AI Wine Pairing</span></>
-                                            )}
+                                        <button onClick={handleGetWinePairing} disabled={isFetchingSuggestion} className="w-full bg-colore-quattro text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors hover:bg-gray-700 disabled:bg-gray-500 disabled:cursor-not-allowed">
+                                            {isFetchingSuggestion ? ( <><i className="fas fa-spinner fa-spin"></i><span>Getting Suggestions...</span></> ) : ( <><i className="fas fa-wine-glass-alt"></i><span>Get AI Wine Pairing</span></> )}
                                         </button>
-
                                         {suggestionError && <p className="text-red-500 text-sm mt-3 text-center">{suggestionError}</p>}
-                                        
                                         {wineSuggestions && wineSuggestions.length > 0 && (
                                             <div className="mt-4 p-4 bg-colore-uno/70 rounded-lg">
-                                                <h4 className="text-lg font-semibold mb-3 text-colore-quattro flex items-center gap-2">
-                                                    <i className="fas fa-star text-colore-otto"></i>
-                                                    Sommelier's Suggestions
-                                                </h4>
+                                                <h4 className="text-lg font-semibold mb-3 text-colore-quattro flex items-center gap-2"><i className="fas fa-star text-colore-otto"></i>Sommelier's Suggestions</h4>
                                                 <div className="space-y-4">
                                                     {wineSuggestions.map((suggestion, index) => (
                                                         <div key={index} className="border-t border-colore-due pt-3 first:border-t-0 first:pt-0">
@@ -305,13 +271,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
                                                                     <p className="font-bold text-colore-quattro">{suggestion.wineName}</p>
                                                                     <p className="text-sm text-colore-tre mt-1 italic">"{suggestion.pairingReason}"</p>
                                                                 </div>
-                                                                <button 
-                                                                    onClick={() => handleAddSuggestedWine(suggestion.wineName)}
-                                                                    className="bg-colore-sette text-white px-3 py-1 rounded-md text-sm hover:bg-green-700 transition-colors flex-shrink-0"
-                                                                    aria-label={`Add ${suggestion.wineName} to cart`}
-                                                                >
-                                                                    Add
-                                                                </button>
+                                                                <button onClick={() => handleAddSuggestedWine(suggestion.wineName)} className="bg-colore-sette text-white px-3 py-1 rounded-md text-sm hover:bg-green-700 transition-colors flex-shrink-0" aria-label={`Add ${suggestion.wineName} to cart`}>Add</button>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -319,15 +279,9 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
                                             </div>
                                         )}
                                       </div>
-
-                                      <div className="flex justify-between items-center text-xl font-bold mb-2">
-                                          <span>Subtotal</span>
-                                          <span>${subtotal.toFixed(2)}</span>
-                                      </div>
+                                      <div className="flex justify-between items-center text-xl font-bold mb-2"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
                                       <p className="text-sm text-gray-500 text-center mb-4">A 20% service fee will be added at checkout.</p>
-                                      <button onClick={() => setIsCheckingOut(true)} className="w-full bg-colore-cinque text-white py-3 rounded-lg text-lg font-semibold hover:bg-colore-nove transition-colors">
-                                          Proceed to Checkout
-                                      </button>
+                                      <button onClick={() => setIsCheckingOut(true)} className="w-full bg-colore-cinque text-white py-3 rounded-lg text-lg font-semibold hover:bg-colore-nove transition-colors">Proceed to Checkout</button>
                                     </>
                                   )}
                                 </div>

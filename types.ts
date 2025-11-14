@@ -6,6 +6,7 @@ export interface MenuItem {
     price: string;
     priceValue: number;
     image: string;
+    status: 'Available' | 'Sold Out' | string;
 }
 
 export interface MenuCategory {
