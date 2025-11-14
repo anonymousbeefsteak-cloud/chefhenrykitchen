@@ -1,402 +1,157 @@
-// Code.gs - Henry's Kitchen Pasta & Grill Management System
-// This script provides a complete backend for the restaurant website and admin panel.
-// It manages orders, the menu, analytics, and settings.
-// Sheet ID: 1OhJNJTIdwt5c0UVaRXHTCkBfsuG9hoIeMaRSDzMU2d4
+// Google Apps Script backend for Henry's Kitchen Pre-orders
+// To deploy:
+// 1. Open a new script project at script.google.com.
+// 2. Create a new Google Sheet to store your orders.
+// 3. In the script editor, go to File > New > Script file, and name it Code.gs.
+// 4. Replace the content of Code.gs with this script.
+// 5. Go to Deploy > New deployment.
+// 6. Select "Web app" as the type.
+// 7. In the configuration, set "Execute as" to "Me" and "Who has access" to "Anyone".
+// 8. Click "Deploy".
+// 9. Grant the necessary permissions for the script to access your Google Sheet.
+// 10. Copy the Web app URL provided.
+// 11. Paste this URL into the SCRIPT_URL constants in `admin/index.html` and `components/ShoppingCart.tsx`.
 
-// --- GLOBAL CONFIGURATION ---
-const SPREADSHEET_ID = '1OhJNJTIdwt5c0UVaRXHTCkBfsuG9hoIeMaRSDzMU2d4';
+var SHEET_NAME = "Orders";
 
-const SHEET_NAMES = {
-  ORDERS: 'Orders',
-  MENU: 'Menu',
-  SETTINGS: 'Settings'
-};
-
-const HEADERS = {
-  ORDERS: ['Order ID', 'Customer Name', 'Phone', 'Email', 'Order Date', 'Pickup Time', 'Order Items', 'Total Amount', 'Status'],
-  MENU: ['ID', 'Name', 'Description', 'Price String', 'Price Value', 'Image URL', 'Category', 'Status'],
-  SETTINGS: ['Setting', 'Value']
-};
-
-// --- UTILITY FUNCTIONS ---
-const getSpreadsheet = () => SpreadsheetApp.openById(SPREADSHEET_ID);
-const getSheet = (name) => getSpreadsheet().getSheetByName(name);
-
-function getSheetAsJSON(sheet) {
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return [];
-  const headers = data.shift();
-
-  // Standardize headers to camelCase for robust key access in JavaScript
-  const keys = headers.map(header => 
-    header.toString().trim()
-      .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special characters
-      .replace(/\s(.)/g, ($1) => $1.toUpperCase()) // Uppercase char after space
-      .replace(/\s/g, '') // Remove spaces
-      .replace(/^(.)/, ($1) => $1.toLowerCase()) // Lowercase first char
-  );
-  
-  return data.map(row => {
-    const obj = {};
-    keys.forEach((key, i) => {
-      if (key) { // Only add if the key is valid
-        obj[key] = row[i];
-      }
-    });
-    return obj;
-  });
-}
-
-function jsonResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
-}
-
-// --- WEB APP ENTRY POINTS (GET & POST) ---
-
+// This function runs when a GET request is made to the script URL
 function doGet(e) {
-  try {
-    const action = e.parameter.action;
-    switch (action) {
-      case 'getOrders':
-        return jsonResponse({ status: 'success', data: getOrders() });
-      case 'getMenu':
-        return jsonResponse({ status: 'success', data: getMenu() });
-      case 'getAnalytics':
-        return jsonResponse({ status: 'success', data: getAnalytics() });
-      case 'getSettings':
-        return jsonResponse({ status: 'success', data: getSettings() });
-      default:
-        return jsonResponse({ status: 'success', message: 'Henry\'s Kitchen API is running.' });
-    }
-  } catch (error) {
-    Logger.log(`doGet Error: ${error.toString()}`);
-    return jsonResponse({ status: 'error', message: error.toString() });
+  var action = e.parameter.action;
+
+  if (action == 'getOrders') {
+    return getOrders();
   }
+  
+  // Return a generic error for other GET requests
+  return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Invalid GET action' })).setMimeType(ContentService.MimeType.JSON);
 }
 
+// This function runs when a POST request is made to the script URL
 function doPost(e) {
-  try {
-    const params = e.parameter;
-    const action = params.action;
+  var action = e.parameter.action;
 
-    switch (action) {
-      case 'createOrder':
-        return jsonResponse(createOrder(params));
-      case 'updateStatus':
-        return jsonResponse(updateOrderStatus(params.orderId, params.status));
-      case 'addMenuItem':
-        return jsonResponse(addMenuItem(JSON.parse(params.itemData)));
-      case 'updateMenuItem':
-        return jsonResponse(updateMenuItem(params.itemId, JSON.parse(params.itemData)));
-      case 'updateMenuStatus':
-        return jsonResponse(updateMenuStatus(params.itemId, params.status));
-      case 'deleteMenuItem':
-        return jsonResponse(deleteMenuItem(params.itemId));
-      case 'updateSettings':
-        return jsonResponse(updateSettings(JSON.parse(params.settingsData)));
-      default:
-        // Fallback for original order form POST
-        return jsonResponse(createOrder(params));
-    }
-  } catch (error) {
-    Logger.log(`doPost Error: ${error.toString()}\nPayload: ${e.postData ? e.postData.contents : 'N/A'}`);
-    return jsonResponse({ status: 'error', message: error.toString() });
+  if (action == 'updateStatus') {
+    return updateOrderStatus(e);
   }
-}
-
-// --- DATA FETCHING FUNCTIONS (GET) ---
-
-function getOrders() {
-  const sheet = getSheet(SHEET_NAMES.ORDERS);
-  return getSheetAsJSON(sheet).reverse();
-}
-
-function getMenu() {
-  const sheet = getSheet(SHEET_NAMES.MENU);
-  const menuData = getSheetAsJSON(sheet);
-  // Ensure priceValue is a number
-  return menuData.map(item => ({...item, priceValue: Number(item.priceValue) || 0}));
-}
-
-function getSettings() {
-  const sheet = getSheet(SHEET_NAMES.SETTINGS);
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return {};
-  const settings = {};
-  data.slice(1).forEach(row => {
-    settings[row[0]] = row[1];
-  });
-  return settings;
-}
-
-function getAnalytics() {
-  const orders = getOrders();
-  const menu = getMenu();
-  const now = new Date();
-
-  // 1. Key Metrics
-  const totalRevenue = orders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
-  const totalOrders = orders.length;
-  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-  // 2. Sales Over Time (Last 30 days)
-  const salesByDay = {};
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    const day = d.toISOString().split('T')[0];
-    salesByDay[day] = 0;
-  }
-  orders.forEach(order => {
-    const orderDate = new Date(order.orderDate);
-    if ((now - orderDate) / (1000 * 60 * 60 * 24) < 30) {
-      const day = orderDate.toISOString().split('T')[0];
-      if (salesByDay[day] !== undefined) {
-        salesByDay[day] += Number(order.totalAmount) || 0;
-      }
-    }
-  });
-
-  // 3. Top Selling Items
-  const itemCounts = {};
-  orders.forEach(order => {
-    try {
-        const orderItems = JSON.parse(order.orderItems || '[]');
-        orderItems.forEach(item => {
-            itemCounts[item.name] = (itemCounts[item.name] || 0) + item.quantity;
-        });
-    } catch(e) {
-        // Fallback for old string format
-        const items = (order.orderItems || '').split('; ');
-        items.forEach(itemString => {
-            const match = itemString.match(/^(\d+)\s*x\s*(.+?)\s*-/);
-            if (match) {
-                const qty = parseInt(match[1], 10);
-                const name = match[2].trim();
-                itemCounts[name] = (itemCounts[name] || 0) + qty;
-            }
-        });
-    }
-  });
-
-  const topSellers = Object.entries(itemCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 10)
-    .map(([name, count]) => ({ name, count }));
-
-  return {
-    keyMetrics: {
-      totalRevenue: totalRevenue.toFixed(2),
-      totalOrders,
-      avgOrderValue: avgOrderValue.toFixed(2)
-    },
-    salesReport: {
-      labels: Object.keys(salesByDay),
-      data: Object.values(salesByDay)
-    },
-    topSellers
-  };
-}
-
-// --- DATA MODIFICATION FUNCTIONS (POST) ---
-
-function createOrder(params) {
-  const { customerName, customerEmail, customerPhone, pickupTime, orderDetails, total } = params;
-  const sheet = getSheet(SHEET_NAMES.ORDERS);
-  const orderId = 'ORD-' + Utilities.getUuid().substring(0, 8).toUpperCase();
   
-  sheet.appendRow([
-    orderId, customerName, customerPhone, customerEmail, new Date(),
-    pickupTime, orderDetails, total, 'Pending' // Store raw JSON string for details
-  ]);
-  return { status: 'success', message: 'Order created', orderId };
+  // If no action, assume it's a new order submission
+  return handleNewOrder(e);
 }
 
-function updateOrderStatus(orderId, newStatus) {
-  const sheet = getSheet(SHEET_NAMES.ORDERS);
-  const data = sheet.getDataRange().getValues();
-  const idColIndex = HEADERS.ORDERS.indexOf('Order ID');
-  const statusColIndex = HEADERS.ORDERS.indexOf('Status');
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][idColIndex] === orderId) {
-      sheet.getRange(i + 1, statusColIndex + 1).setValue(newStatus);
-      return { status: 'success', message: `Order ${orderId} updated` };
-    }
-  }
-  return { status: 'error', message: 'Order not found' };
-}
-
-function addMenuItem(item) {
-  const sheet = getSheet(SHEET_NAMES.MENU);
-  const newId = 'ITEM-' + Utilities.getUuid().substring(0, 8).toUpperCase();
-  sheet.appendRow([
-    newId, item.name, item.description, item.price, item.priceValue,
-    item.image, item.category, item.status
-  ]);
-  return { status: 'success', message: 'Menu item added', newItem: {...item, id: newId} };
-}
-
-function updateMenuItem(itemId, itemData) {
-  const sheet = getSheet(SHEET_NAMES.MENU);
-  const data = sheet.getDataRange().getValues();
-  const idColIndex = HEADERS.MENU.indexOf('ID');
-
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][idColIndex] === itemId) {
-      // Assumes order of itemData properties matches HEADERS.MENU
-      const newRow = [
-        itemId, itemData.name, itemData.description, itemData.price,
-        itemData.priceValue, itemData.image, itemData.category, itemData.status
-      ];
-      sheet.getRange(i + 1, 1, 1, newRow.length).setValues([newRow]);
-      return { status: 'success', message: 'Menu item updated' };
-    }
-  }
-  return { status: 'error', message: 'Item not found' };
-}
-
-function updateMenuStatus(itemId, newStatus) {
-  const sheet = getSheet(SHEET_NAMES.MENU);
-  const data = sheet.getDataRange().getValues();
-  const idColIndex = HEADERS.MENU.indexOf('ID');
-  const statusColIndex = HEADERS.MENU.indexOf('Status');
-
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][idColIndex] === itemId) {
-      sheet.getRange(i + 1, statusColIndex + 1).setValue(newStatus);
-      return { status: 'success', message: `Item ${itemId} status updated to ${newStatus}` };
-    }
-  }
-  return { status: 'error', message: 'Item not found' };
-}
-
-function deleteMenuItem(itemId) {
-  const sheet = getSheet(SHEET_NAMES.MENU);
-  const data = sheet.getDataRange().getValues();
-  const idColIndex = HEADERS.MENU.indexOf('ID');
-
-  for (let i = data.length - 1; i >= 1; i--) {
-    if (data[i][idColIndex] === itemId) {
-      sheet.deleteRow(i + 1);
-      return { status: 'success', message: 'Menu item deleted' };
-    }
-  }
-  return { status: 'error', message: 'Item not found' };
-}
-
-function updateSettings(settingsData) {
-  const sheet = getSheet(SHEET_NAMES.SETTINGS);
-  const data = sheet.getDataRange().getValues();
-  const settingColIndex = HEADERS.SETTINGS.indexOf('Setting');
-  const valueColIndex = HEADERS.SETTINGS.indexOf('Value');
-
-  Object.entries(settingsData).forEach(([key, value]) => {
-    let found = false;
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][settingColIndex] === key) {
-        sheet.getRange(i + 1, valueColIndex + 1).setValue(value);
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      sheet.appendRow([key, value]);
-    }
-  });
-  return { status: 'success', message: 'Settings updated' };
-}
-
-
-// --- INITIALIZATION ---
-
-/**
- * Run this function ONCE from the Apps Script editor to set up your spreadsheet.
- * 1. Open your Google Sheet.
- * 2. Go to Extensions > Apps Script.
- * 3. In the script editor, select 'initializeApp' from the function dropdown.
- * 4. Click 'Run'.
- * 5. You may be prompted to authorize the script. Please allow permissions.
- * This will create all necessary sheets and populate them with initial data.
- */
-function initializeApp() {
+// Function to handle a new pre-order
+function handleNewOrder(e) {
   try {
-    const ss = getSpreadsheet();
-    if (!ss) {
-      throw new Error("Spreadsheet not found. Please check SPREADSHEET_ID.");
-    }
-    Logger.log(`Initializing spreadsheet: ${ss.getName()}`);
-
-    // 1. Verify/Create Sheets and Headers
-    Object.keys(HEADERS).forEach(key => {
-      const sheetName = SHEET_NAMES[key];
-      const headers = HEADERS[key];
-      let sheet = ss.getSheetByName(sheetName);
-      if (!sheet) {
-        sheet = ss.insertSheet(sheetName);
-        Logger.log(`Created sheet: ${sheetName}`);
-      }
-      // Only set headers if the sheet is new or empty
-      if (sheet.getLastRow() < 1) {
-        sheet.getRange(1, 1, 1, headers.length).setValues([headers])
-          .setFontWeight('bold').setBackground('#4A2C2A').setFontColor('white');
-        sheet.setFrozenRows(1);
-        Logger.log(`Set headers for sheet: ${sheetName}`);
-      }
-    });
-
-    // 2. Populate Initial Menu if empty
-    const menuSheet = getSheet(SHEET_NAMES.MENU);
-    if (menuSheet.getLastRow() === 1) { // Only headers exist
-      populateInitialMenu(menuSheet);
-      Logger.log('Populated initial menu data.');
-    }
-
-    // 3. Populate Initial Settings if empty
-    const settingsSheet = getSheet(SHEET_NAMES.SETTINGS);
-    if (settingsSheet.getLastRow() === 1) {
-      settingsSheet.appendRow(['Business Hours', 'Fridays, Saturdays & Sundays (dinner only)']);
-      settingsSheet.appendRow(['Service Fee', '20']); // Store as a number
-      Logger.log('Populated initial settings.');
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    // If the sheet doesn't exist, create it with headers
+    if (!sheet) {
+        sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(SHEET_NAME);
+        sheet.appendRow(["Timestamp", "Order ID", "Customer Name", "Email", "Phone", "Pickup Time", "Order Items", "Subtotal", "Service Fee", "Total Amount", "Status"]);
     }
     
-    SpreadsheetApp.flush();
-    const message = 'Henry\'s Kitchen app initialized/verified successfully!';
-    Logger.log(message);
-    if (typeof Browser !== 'undefined') {
-      Browser.msgBox('Success', message, Browser.Buttons.OK);
-    }
-  } catch(e) {
-    const errorMessage = `Initialization failed: ${e.message} at ${e.fileName}:${e.lineNumber}`;
-    Logger.log(errorMessage);
-    if (typeof Browser !== 'undefined') {
-      Browser.msgBox('Error', errorMessage, Browser.Buttons.OK);
-    }
+    var orderDetailsParsed = JSON.parse(e.parameter.orderDetails);
+    var orderItems = orderDetailsParsed.map(function(item) {
+        return item.quantity + "x " + item.name;
+    }).join('; ');
+
+    var orderId = generateOrderId();
+
+    // Append the new order data as a new row
+    sheet.appendRow([
+      new Date(),
+      orderId,
+      e.parameter.customerName,
+      e.parameter.customerEmail,
+      e.parameter.customerPhone,
+      new Date(e.parameter.pickupTime),
+      orderItems,
+      e.parameter.subtotal,
+      e.parameter.serviceFee,
+      e.parameter.total,
+      "Pending" // Default status for new orders
+    ]);
+    
+    // While no-cors won't let the client see this, it's good practice for API design.
+    return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Order received', orderId: orderId })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    Logger.log(error);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-function populateInitialMenu(sheet) {
-  const initialMenu = [
-    // Breads & Soups
-    ['b1', 'HOME MADE BREAD', 'focaccia with balsamic reduction & extra virgin olive oil, whipped butter', '$4.95', 4.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/bread-1920w.jpg', 'Breads & Soups', 'Available'],
-    ['b2', 'GARLIC BREAD', 'sliced home made crusty french bread toasted with garlic butter', '$4.95', 4.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/garlic-1920w.jpg', 'Breads & Soups', 'Available'],
-    ['s1', 'FRENCH ONION SOUP', '', '$18.00', 18.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/onion-soup-ff70c88d-1920w.jpg', 'Breads & Soups', 'Available'],
-    // Appetizers & Salads
-    ['sa1', 'HOUSE SALAD', 'spring mix and crisp romaine lettuce tossed with our house dressing and balsamic reduction', '(S) $14.95 (L)$16.95', 14.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/hou.salad-1920w.jpg', 'Appetizers & Salads', 'Available'],
-    ['sa2', 'CAESAR SALAD', 'crisp romaine lettuce with homemade Caesar dressing, parmesan cheese and homemade garlic crouton', '(S) $14.95 (L)$16.95', 14.95, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ceaser-1920w.jpg', 'Appetizers & Salads', 'Available'],
-    // Hot Appetizers
-    ['ha1', 'ESCARGOTS A LAD PARISIENNE', 'baked snails in a cognac, garlic, & herb butter', '$18.00', 18.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/ecsago-a9f326c4-1920w.jpg', 'Hot Appetizers', 'Available'],
-    // Pasta
-    ['p1', 'PENNE POMODORO', 'with Italian plum tomatoes and fresh basil', '$30.00', 30.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/tom-1920w.jpg', 'The Classic Art of Pasta', 'Available'],
-    ['p2', 'PENNE ALFREDO', 'tossed in a rich parmigiano cheese cream sauce', '$30.00', 30.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cream-1920w.jpg', 'The Classic Art of Pasta', 'Available'],
-    // Specialties
-    ['hs3', 'BEEF WELLINGTON', 'tenderloin of beef wrapped with prosciutto, foie gras purée, mushroom & truffle duxelle, baked in a flaky puff pastry', '$65.00', 65.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/wellington-1920w.jpg', 'Henry\'s Specialties', 'Available'],
-    ['hs4', 'RACK OF LAMB', 'with a Provençale herbs crust and rosemary jus', '$65.00', 65.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/lamb-1920w.jpg', 'Henry\'s Specialties', 'Available'],
-    // Desserts
-    ['d1', 'SIGNATURE CHEESE CAKE', 'with brandied blueberries', '$15.00', 15.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/cheese+cake-1920w.jpg', 'Homemade Desserts', 'Available'],
-    // Wine List
-    ['w1', 'HOUSE RED (LE VILLAGEOIS)', 'FRANCE (DRY)', '(8OZ) $15.00', 15.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOUSE.RED-1920w.jpg', 'Wine List', 'Available'],
-    ['w10', 'HOUSE WHITE (HOCHTALER)', 'B.C. (DRY)', '(8OZ) $15.00', 15.00, 'https://lirp.cdn-website.com/0015f2f5/dms3rep/multi/opt/HOCHT-1920w.jpg', 'Wine List', 'Available']
-  ];
-  sheet.getRange(2, 1, initialMenu.length, initialMenu[0].length).setValues(initialMenu);
+// Function to fetch all orders for the admin panel
+function getOrders() {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: [] })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: [] })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var headers = data.shift(); // Get headers
+    
+    var orders = data.map(function(row) {
+      var order = {};
+      headers.forEach(function(header, index) {
+        // Handle Date objects properly for JSON serialization
+        if (row[index] instanceof Date) {
+          order[header] = row[index].toISOString();
+        } else {
+          order[header] = row[index];
+        }
+      });
+      return order;
+    });
+
+    // Return newest orders first for the admin panel display
+    return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: orders.reverse() })).setMimeType(ContentService.MimeType.JSON);
+  } catch(error) {
+    Logger.log(error);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Function to update the status of an order from the admin panel
+function updateOrderStatus(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    var orderId = e.parameter.orderId;
+    var newStatus = e.parameter.status;
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var orderIdColIndex = headers.indexOf("Order ID");
+    var statusColIndex = headers.indexOf("Status");
+    
+    if (orderIdColIndex === -1 || statusColIndex === -1) {
+        throw new Error("Required columns ('Order ID' or 'Status') not found in the sheet.");
+    }
+
+    // Find the row with the matching Order ID and update its status
+    // Start from 1 to skip header row
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][orderIdColIndex] == orderId) {
+        // The range is 1-indexed, and we need to account for the header row (i+1)
+        sheet.getRange(i + 1, statusColIndex + 1).setValue(newStatus);
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Status updated successfully' })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    throw new Error("Order ID '" + orderId + "' not found.");
+
+  } catch(error) {
+    Logger.log(error);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+// Function to generate a simple unique Order ID
+function generateOrderId() {
+    // Generates an ID like "HK-a1b2c3d"
+    return "HK-" + Math.random().toString(36).substr(2, 7);
 }

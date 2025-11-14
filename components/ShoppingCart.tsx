@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
+import { menuData } from '../constants/menuData';
 import type { CartItem, MenuItem } from '../types';
 
 interface ShoppingCartProps {
@@ -11,12 +11,11 @@ interface ShoppingCartProps {
     onUpdateQuantity: (itemId: string, quantity: number) => void;
     onClearCart: () => void;
     onAddToCart: (item: MenuItem) => void;
-    fullMenu: MenuItem[];
 }
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQWgtwwi5Zc6yO8lCUMmXDNlHzHFKFeQ6FBoMPlqqhZXolqRnfa_voOjnmPn_84eVj/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5m6PuueTv4OcabjS9fabmL3XnRQ_qcwjBavcHRiQjxRY68MXaCxh-EyK243aRVohy/exec';
 
-const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity, onClearCart, onAddToCart, fullMenu }) => {
+const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity, onClearCart, onAddToCart }) => {
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [customerName, setCustomerName] = useState('');
     const [customerEmail, setCustomerEmail] = useState('');
@@ -60,9 +59,8 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             
-            const wineNames = fullMenu
-                .filter(item => item.category === 'Wine List' && item.status === 'Available')
-                .map(item => item.name);
+            const wineListCategory = menuData.find(category => category.title === "Wine List");
+            const wineNames = wineListCategory ? wineListCategory.items.map(item => item.name) : [];
             
             if (wineNames.length === 0) {
                 setSuggestionError("Could not find our wine list to make a suggestion.");
@@ -121,7 +119,8 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
     };
     
     const handleAddSuggestedWine = (wineName: string) => {
-        const wineItem = fullMenu.find(item => item.name === wineName);
+        const wineListCategory = menuData.find(category => category.title === "Wine List");
+        const wineItem = wineListCategory?.items.find(item => item.name === wineName);
         if (wineItem) {
             onAddToCart(wineItem);
         } else {
@@ -146,24 +145,19 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems,
         formData.append('subtotal', subtotal.toFixed(2));
         formData.append('serviceFee', serviceFee.toFixed(2));
         formData.append('total', total.toFixed(2));
-        formData.append('action', 'createOrder');
 
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 body: formData,
             });
+
             setSubmitStatus('success');
             onClearCart();
         } catch (error) {
-            if (error instanceof TypeError) {
-                console.log('Order submitted. A CORS error is expected, but the request likely succeeded.');
-                setSubmitStatus('success');
-                onClearCart();
-            } else {
-                console.error('Error submitting order:', error);
-                setSubmitStatus('error');
-            }
+            console.error('Error submitting order:', error);
+            setSubmitStatus('error');
         } finally {
             setIsSubmitting(false);
         }
