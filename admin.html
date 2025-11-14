@@ -119,7 +119,7 @@
     <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-colore-quattro text-white px-6 py-3 rounded-lg shadow-lg transition-transform transform translate-y-20 opacity-0"></div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-ZPMg0fXJLjhHtC7ExH5PE7nF7YIkCAYphWtolJlUhLfuLa8zwRkqVo3BYcPNb7Nl/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQWgtwwi5Zc6yO8lCUMmXDNlHzHFKFeQ6FBoMPlqqhZXolqRnfa_voOjnmPn_84eVj/exec';
         const ADMIN_PASSWORD = 'henry2024';
 
         const app = {
@@ -303,10 +303,10 @@
                 const menuToRender = this.state.filteredMenu.length || document.getElementById('search-menu')?.value ? this.state.filteredMenu : this.state.menu;
                 const menuHtml = menuToRender.map(item => `
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="p-4"><img src="${item.image}" alt="${item.name}" class="w-16 h-12 object-cover rounded-md"></td>
+                        <td class="p-4"><img src="${item.imageUrl}" alt="${item.name}" class="w-16 h-12 object-cover rounded-md"></td>
                         <td class="p-4 font-semibold">${item.name}</td>
                         <td class="p-4 text-sm text-gray-600">${item.category}</td>
-                        <td class="p-4 font-mono">${item.price}</td>
+                        <td class="p-4 font-mono">${item.priceString}</td>
                         <td class="p-4">
                             <span class="px-3 py-1 text-xs font-semibold rounded-full ${item.status === 'Available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.status}</span>
                         </td>
@@ -399,9 +399,9 @@
                             document.getElementById('name').value = item.name;
                             document.getElementById('category').value = item.category;
                             document.getElementById('description').value = item.description;
-                            document.getElementById('price').value = item.price;
+                            document.getElementById('price').value = item.priceString;
                             document.getElementById('priceValue').value = item.priceValue;
-                            document.getElementById('image').value = item.image;
+                            document.getElementById('image').value = item.imageUrl;
                             document.getElementById('status').value = item.status;
                         }
                     } else { this.dom.modalTitle.textContent = 'Add Menu Item'; }
