@@ -16,7 +16,7 @@ import FullscreenPrompt from './components/FullscreenPrompt';
 import VideoBackground from './components/VideoBackground';
 import type { CartItem, MenuItem, MenuCategory } from './types';
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQWgtwwi5Zc6yO8lCUMmXDNlHzHFKFeQ6FBoMPlqqhZXolqRnfa_voOjnmPn_84eVj/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-ZPMg0fXJLjhHtC7ExH5PE7nF7YIkCAYphWtolJlUhLfuLa8zwRkqVo3BYcPNb7Nl/exec';
 
 const App: React.FC = () => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
