@@ -14,7 +14,7 @@ interface ShoppingCartProps {
     fullMenu: MenuItem[];
 }
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQWgtwwi5Zc6yO8lCUMmXDNlHzHFKFeQ6FBoMPlqqhZXolqRnfa_voOjnmPn_84eVj/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-ZPMg0fXJLjhHtC7ExH5PE7nF7YIkCAYphWtolJlUhLfuLa8zwRkqVo3BYcPNb7Nl/exec';
 
 const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity, onClearCart, onAddToCart, fullMenu }) => {
     const [isCheckingOut, setIsCheckingOut] = useState(false);
